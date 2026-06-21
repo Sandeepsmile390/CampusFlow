@@ -76,6 +76,11 @@ export default function DashboardLayout({ children }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Auto-close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   const handleLogout = async () => {
     try {
       await axiosInstance.post('/auth/logout');
@@ -620,11 +625,13 @@ export default function DashboardLayout({ children }) {
                   const isActive = location.pathname === item.path;
                   const Icon = item.icon;
                   return (
-                    <Link
+                    <div
                       key={item.path}
-                      to={item.path}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all border ${
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigate(item.path);
+                      }}
+                      className={`flex flex-col items-center gap-2 p-3 rounded-2xl cursor-pointer transition-all border ${
                         isActive
                           ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-650 dark:text-indigo-400'
                           : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200/50 dark:border-slate-800/50 text-slate-600 dark:text-slate-400'
@@ -632,7 +639,7 @@ export default function DashboardLayout({ children }) {
                     >
                       <Icon className="h-6 w-6" />
                       <span className="text-[10px] text-center font-semibold truncate w-full">{item.name}</span>
-                    </Link>
+                    </div>
                   );
                 })}
               </div>
