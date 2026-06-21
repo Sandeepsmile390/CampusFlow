@@ -58,6 +58,16 @@ app.get('/health', (req, res) => {
   res.status(200).json({ success: true, status: 'Healthy', timestamp: new Date() });
 });
 
+// Root welcome endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "CampusFlow Backend API is running successfully!",
+    health: "/health",
+    frontend: "https://campus-flow-brown.vercel.app"
+  });
+});
+
 // Catch-all 404
 app.use((req, res, next) => {
   res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found.` });
