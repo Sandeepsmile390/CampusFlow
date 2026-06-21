@@ -4,6 +4,8 @@ import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import Logo from '../Logo';
+import NotificationPanel from '../NotificationPanel';
+
 import {
   LayoutDashboard,
   Users,
@@ -33,6 +35,8 @@ import {
   TrendingUp
 } from 'lucide-react';
 import axiosInstance from '../../utils/axios';
+import { useNotificationStore } from '../../store/notificationStore';
+
 
 export default function DashboardLayout({ children }) {
   const { user, logout } = useAuthStore();
@@ -45,6 +49,9 @@ export default function DashboardLayout({ children }) {
   const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const { unreadCount, fetchNotifications, togglePanel } = useNotificationStore();
+
   
   // AI assistant states
   const [messages, setMessages] = useState([
@@ -80,6 +87,14 @@ export default function DashboardLayout({ children }) {
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
+
+  // Fetch notifications on mount + poll every 60 s
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
 
   const handleLogout = async () => {
     try {
@@ -382,10 +397,22 @@ export default function DashboardLayout({ children }) {
             </button>
 
             {/* Notification bell */}
-            <div className="relative p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900/60 cursor-pointer text-slate-500 dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-white transition-colors">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-[#14B8A6] rounded-full border border-white dark:border-slate-950"></span>
+            <div className="relative">
+              <button
+                onClick={togglePanel}
+                className="relative p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900/60 cursor-pointer text-slate-500 dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-white transition-colors"
+                aria-label="Notifications"
+              >
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 min-w-[16px] h-4 px-0.5 bg-[#14B8A6] text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-slate-950 leading-none">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+              <NotificationPanel />
             </div>
+
           </div>
         </header>
 

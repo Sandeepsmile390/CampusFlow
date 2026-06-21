@@ -22,6 +22,7 @@ model User {
   auditLogs          AuditLog[]
   createdGroups      DiscussionGroup[]   @relation("GroupCreator")
   discussionMessages DiscussionMessage[]
+  notifications      Notification[]
   postedNotices      Notice[]
   parentProfile      Parent?
   studentProfile     Student?
@@ -288,6 +289,22 @@ model PushSubscription {
   @@index([userId])
 }
 
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      NotificationType @default(INFO)
+  isRead    Boolean          @default(false)
+  link      String?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+
 model DiscussionGroup {
   id           String              @id @default(uuid())
   name         String
@@ -350,4 +367,11 @@ enum NoticeCategory {
   EXAM
   HOLIDAY
   PLACEMENT
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  DANGER
 }

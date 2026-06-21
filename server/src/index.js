@@ -18,6 +18,8 @@ import noticesRouter from './modules/notices/notices.routes.js';
 import analyticsRouter from './modules/analytics/analytics.routes.js';
 import aiRouter from './modules/ai/ai.routes.js';
 import discussionsRouter from './modules/discussions/discussions.routes.js';
+import notificationsRouter from './modules/notifications/notifications.routes.js';
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -52,6 +54,8 @@ app.use('/api/v1/notices', noticesRouter);
 app.use('/api/v1/analytics', analyticsRouter);
 app.use('/api/v1/ai', aiRouter);
 app.use('/api/v1/discussions', discussionsRouter);
+app.use('/api/v1/notifications', notificationsRouter);
+
 
 // Health check endpoint
 app.get('/health', (req, res) => {
