@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import axiosInstance from '../../utils/axios';
 import { useAuthStore } from '../../store/authStore';
 import { QrCode, BookOpen, Clock, Loader2, Sparkles } from 'lucide-react';
+import { Skeleton } from '../../components/Skeleton';
 
 export default function AttendanceQR() {
   const { user } = useAuthStore();
@@ -116,7 +117,13 @@ export default function AttendanceQR() {
         {/* QR Visual Projector */}
         <div className="lg:col-span-2 glass-card flex flex-col items-center justify-center p-8 space-y-6 min-h-[400px] border-glow">
           {loading ? (
-            <Loader2 className="h-12 w-12 animate-spin text-brand-indigo" />
+            <div className="flex flex-col items-center space-y-4">
+              <div className="relative p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/20 dark:border-slate-800/40 flex items-center justify-center h-76 w-76">
+                <Skeleton className="h-64 w-64 rounded-xl" />
+              </div>
+              <Skeleton className="h-5 w-32 mt-4" />
+              <Skeleton className="h-3.5 w-48" />
+            </div>
           ) : qrToken ? (
             <div className="flex flex-col items-center space-y-4">
               {/* QR Screen Frame */}

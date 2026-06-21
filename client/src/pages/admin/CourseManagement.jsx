@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '../../utils/axios';
 import { Plus, Trash2, Calendar, BookOpen, FolderTree, X, Loader2 } from 'lucide-react';
+import { SkeletonTable } from '../../components/Skeleton';
 
 export default function CourseManagement() {
   const queryClient = useQueryClient();
@@ -154,9 +155,7 @@ export default function CourseManagement() {
 
       {/* Tab Contents */}
       {coursesLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-        </div>
+        <SkeletonTable rows={5} cols={6} />
       ) : (
         <>
           {/* Courses Tab */}

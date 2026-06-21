@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '../../utils/axios';
 import { useAuthStore } from '../../store/authStore';
 import { ClipboardCheck, QrCode, Camera, Loader2, Calendar, AlertTriangle, CheckCircle, ShieldAlert } from 'lucide-react';
+import { Skeleton, SkeletonTable } from '../../components/Skeleton';
 
 export default function Attendance() {
   const queryClient = useQueryClient();
@@ -112,8 +113,52 @@ export default function Attendance() {
 
   if (perfLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-[#4338CA] dark:text-[#14B8A6]" />
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-display font-extrabold tracking-tight">Class Attendance Check-In</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Scan timing QR codes or complete face-matching checks to sign in.</p>
+        </div>
+        
+        {/* Fake tab selectors */}
+        <div className="flex border-b border-slate-200/60 dark:border-slate-800/60">
+          <div className="px-6 py-3 border-b-2 border-[#4338CA] dark:border-[#14B8A6] text-[#4338CA] dark:text-[#14B8A6] font-display text-sm font-semibold">Attendance Summary</div>
+          <div className="px-6 py-3 border-b-2 border-transparent text-slate-400 font-display text-sm font-semibold">QR Check-in</div>
+          <div className="px-6 py-3 border-b-2 border-transparent text-slate-400 font-display text-sm font-semibold">AI Face Check-in</div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Subject Wise Progress bars */}
+          <div className="lg:col-span-2 glass-card p-6 space-y-6">
+            <Skeleton className="h-5 w-1/4 mb-4" />
+            <div className="space-y-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-3.5 w-1/3" />
+                    <Skeleton className="h-3.5 w-8" />
+                  </div>
+                  <Skeleton className="h-2.5 w-full rounded-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Monthly Heatmap grids */}
+          <div className="lg:col-span-1 glass-card p-6 space-y-4">
+            <Skeleton className="h-5 w-1/2 mb-2" />
+            <Skeleton className="h-10 w-full" />
+            <div className="grid grid-cols-7 gap-2.5 max-w-[280px] pt-4">
+              {Array.from({ length: 28 }).map((_, idx) => (
+                <Skeleton key={idx} className="h-8 w-8 rounded-lg" />
+              ))}
+            </div>
+          </div>
+
+          {/* Attendance History logs table */}
+          <div className="lg:col-span-3">
+            <SkeletonTable rows={4} cols={5} />
+          </div>
+        </div>
       </div>
     );
   }

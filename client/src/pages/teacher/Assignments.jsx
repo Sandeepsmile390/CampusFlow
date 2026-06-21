@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '../../utils/axios';
 import { useAuthStore } from '../../store/authStore';
 import { Plus, Check, FileText, Calendar, BookOpen, X, Loader2, MessageSquare } from 'lucide-react';
+import { SkeletonList } from '../../components/Skeleton';
 
 export default function Assignments() {
   const queryClient = useQueryClient();
@@ -98,7 +99,7 @@ export default function Assignments() {
         <div className="lg:col-span-1 space-y-4">
           <h3 className="font-bold text-lg">Active Assignments</h3>
           {isLoading ? (
-            <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
+            <SkeletonList count={3} />
           ) : assignments?.length > 0 ? (
             assignments.map(ass => (
               <div

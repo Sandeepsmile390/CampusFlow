@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import axiosInstance from '../../utils/axios';
 import { Plus, Edit2, Trash2, X, Loader2 } from 'lucide-react';
+import { SkeletonTable } from '../../components/Skeleton';
 
 const teacherSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -127,9 +128,7 @@ export default function TeacherManagement() {
 
       <div className="glass-card overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-          </div>
+          <SkeletonTable rows={5} cols={6} />
         ) : teachersRes?.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="custom-table">

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '../../utils/axios';
 import { BookOpen, FileText, Upload, Calendar, X, Loader2, CheckCircle2 } from 'lucide-react';
+import { Skeleton } from '../../components/Skeleton';
 
 export default function Assignments() {
   const queryClient = useQueryClient();
@@ -51,7 +52,23 @@ export default function Assignments() {
       {/* Grid of assignments */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {isLoading ? (
-          <div className="h-40 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-2xl col-span-2"></div>
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="glass-card p-6 flex flex-col justify-between h-48 space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+                <Skeleton className="h-5 w-3/4 mt-2" />
+                <Skeleton className="h-3.5 w-full" />
+                <Skeleton className="h-3.5 w-5/6" />
+              </div>
+              <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800/80">
+                <Skeleton className="h-3.5 w-24" />
+                <Skeleton className="h-7 w-20" />
+              </div>
+            </div>
+          ))
         ) : assignments?.length > 0 ? (
           assignments.map((ass) => {
             const hasSubmitted = ass.submissions?.length > 0;

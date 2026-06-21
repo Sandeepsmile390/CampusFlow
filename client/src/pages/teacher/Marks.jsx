@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import axiosInstance from '../../utils/axios';
 import { useAuthStore } from '../../store/authStore';
 import { BookOpen, FileSpreadsheet, Loader2, Sparkles, UserCheck } from 'lucide-react';
+import { SkeletonTable } from '../../components/Skeleton';
 
 export default function Marks() {
   const { user } = useAuthStore();
@@ -101,10 +102,7 @@ export default function Marks() {
       {/* Grades Registry table */}
       <div className="glass-card overflow-hidden">
         {rosterLoading || loadingDetails ? (
-          <div className="flex items-center justify-center py-20 gap-2">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-            <span className="text-sm text-slate-400">Loading student scores...</span>
-          </div>
+          <SkeletonTable rows={5} cols={6} />
         ) : gradesRoster.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="custom-table">

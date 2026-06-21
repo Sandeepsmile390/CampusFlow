@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import axiosInstance from '../../utils/axios';
 import { useAuthStore } from '../../store/authStore';
 import { BookOpen, Users, ClipboardCheck, Clock, FileSpreadsheet, Loader2 } from 'lucide-react';
+import { Skeleton, SkeletonCardGrid, SkeletonTable } from '../../components/Skeleton';
 
 export default function TeacherDashboard() {
   const { user } = useAuthStore();
@@ -28,8 +29,25 @@ export default function TeacherDashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
+      <div className="space-y-8">
+        {/* Top Hero */}
+        <div className="relative overflow-hidden rounded-3xl bg-dark-gradient text-white p-8 shadow-xl border border-white/5">
+          <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#14B8A6]/10 rounded-full blur-[80px] pointer-events-none" />
+          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-[#4338CA]/10 rounded-full blur-[80px] pointer-events-none" />
+          <div className="relative z-10 space-y-2">
+            <h1 className="text-3xl font-extrabold tracking-tight text-white">Good Morning 👋</h1>
+            <p className="text-slate-300 text-sm max-w-md">Welcome back, {user.profile?.name || 'Professor'}. Manage schedules, verify grade inputs, and generate class reports.</p>
+          </div>
+        </div>
+
+        {/* KPI Cards Skeleton */}
+        <SkeletonCardGrid count={4} />
+
+        {/* Class Schedule Timetable */}
+        <div className="glass-card p-6">
+          <Skeleton className="h-5 w-1/4 mb-6" />
+          <SkeletonTable rows={4} cols={5} />
+        </div>
       </div>
     );
   }

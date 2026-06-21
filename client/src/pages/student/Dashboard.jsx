@@ -4,6 +4,7 @@ import axiosInstance from '../../utils/axios';
 import { useAuthStore } from '../../store/authStore';
 import { Bot, ClipboardCheck, Clock, IndianRupee, FileText, Loader2, Sparkles } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Skeleton, SkeletonCardGrid, SkeletonChart, SkeletonList } from '../../components/Skeleton';
 
 export default function StudentDashboard() {
   const { user } = useAuthStore();
@@ -29,8 +30,30 @@ export default function StudentDashboard() {
 
   if (perfLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
+      <div className="space-y-8">
+        {/* Top Hero */}
+        <div className="relative overflow-hidden rounded-3xl bg-dark-gradient text-white p-8 shadow-xl border border-white/5">
+          <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#14B8A6]/10 rounded-full blur-[80px] pointer-events-none" />
+          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-[#4338CA]/10 rounded-full blur-[80px] pointer-events-none" />
+          <div className="relative z-10 space-y-2">
+            <h1 className="text-3xl font-extrabold tracking-tight text-white">Good Morning 👋</h1>
+            <p className="text-slate-300 text-sm max-w-md">Welcome back, {user.profile?.name || 'Student'}. Manage your courses, view grades, and check timetables efficiently.</p>
+          </div>
+        </div>
+
+        {/* KPI Cards Skeleton */}
+        <SkeletonCardGrid count={4} />
+
+        {/* Chart and Lists Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <SkeletonChart />
+          </div>
+          <div className="lg:col-span-1 glass-card p-6 space-y-4">
+            <Skeleton className="h-5 w-1/2 mb-4" />
+            <SkeletonList count={2} />
+          </div>
+        </div>
       </div>
     );
   }

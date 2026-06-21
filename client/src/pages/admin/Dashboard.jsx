@@ -29,6 +29,7 @@ import {
   Pie,
   Legend
 } from 'recharts';
+import { Skeleton, SkeletonCardGrid, SkeletonChart } from '../../components/Skeleton';
 
 const COLORS = ['#4338CA', '#14B8A6', '#38BDF8', '#312e81', '#0d9488', '#0284c7'];
 
@@ -43,16 +44,26 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="h-40 bg-slate-200 dark:bg-slate-800 rounded-3xl animate-pulse"></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-32 bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
-          ))}
+      <div className="space-y-8">
+        {/* Top Hero */}
+        <div className="relative overflow-hidden rounded-3xl bg-dark-gradient text-white p-8 shadow-xl border border-white/5">
+          <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#14B8A6]/10 rounded-full blur-[80px] pointer-events-none" />
+          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-[#4338CA]/10 rounded-full blur-[80px] pointer-events-none" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-2 w-full">
+              <h1 className="text-3xl font-extrabold tracking-tight text-white">Good Morning 👋</h1>
+              <Skeleton className="h-4 w-1/3 mt-2" />
+            </div>
+          </div>
         </div>
+
+        {/* KPI Cards Skeleton */}
+        <SkeletonCardGrid count={4} />
+
+        {/* Row 1 Charts Skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="h-80 bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
-          <div className="h-80 bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
+          <SkeletonChart height="h-72" />
+          <SkeletonChart height="h-72" />
         </div>
       </div>
     );

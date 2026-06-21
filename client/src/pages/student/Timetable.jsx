@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axiosInstance from '../../utils/axios';
 import { Calendar, Clock, MapPin, BookOpen, Loader2, User } from 'lucide-react';
+import { Skeleton } from '../../components/Skeleton';
 
 export default function Timetable() {
   const { data: schedules, isLoading } = useQuery({
@@ -16,8 +17,30 @@ export default function Timetable() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-[#4338CA] dark:text-[#14B8A6]" />
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-display font-extrabold tracking-tight">Class Timetable</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Review your weekly academic lecture calendar and classrooms.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+          {days.map((day) => (
+            <div key={day} className="glass-card flex flex-col gap-4 p-6">
+              <Skeleton className="h-4 w-2/3 border-b pb-2 mb-2" />
+              <div className="space-y-3 flex-1">
+                {Array.from({ length: 2 }).map((_, idx) => (
+                  <div key={idx} className="p-4 bg-slate-100/50 dark:bg-slate-900/40 border border-slate-200/20 dark:border-slate-800/40 rounded-2xl space-y-2.5">
+                    <Skeleton className="h-3 w-12" />
+                    <Skeleton className="h-4 w-3/4 mt-1.5" />
+                    <Skeleton className="h-3 w-16 mt-2" />
+                    <Skeleton className="h-3 w-14" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

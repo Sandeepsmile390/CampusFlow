@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/authStore';
 import axiosInstance from '../../utils/axios';
 import { Megaphone, Calendar, AlertTriangle, Plus, Trash2, X, Bell } from 'lucide-react';
+import { Skeleton } from '../../components/Skeleton';
 
 export default function NoticeBoard() {
   const queryClient = useQueryClient();
@@ -66,7 +67,20 @@ export default function NoticeBoard() {
       {/* Notice list */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {isLoading ? (
-          <div className="h-40 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-2xl col-span-2"></div>
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="glass-card p-6 flex flex-col justify-between h-48 space-y-4">
+              <div className="space-y-3">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-5 w-3/4 mt-2" />
+                <Skeleton className="h-3.5 w-full" />
+                <Skeleton className="h-3.5 w-5/6" />
+              </div>
+              <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800/85">
+                <Skeleton className="h-3.5 w-24" />
+                <Skeleton className="h-3.5 w-20" />
+              </div>
+            </div>
+          ))
         ) : noticesRes?.length > 0 ? (
           noticesRes.map((notice) => (
             <div key={notice.id} className="glass-card flex flex-col justify-between p-6 border-glow relative hover:scale-[1.02] transition-transform duration-300">

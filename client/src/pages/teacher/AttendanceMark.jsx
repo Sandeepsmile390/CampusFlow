@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '../../utils/axios';
 import { useAuthStore } from '../../store/authStore';
 import { Check, X, Clock, Calendar, BookOpen, Loader2 } from 'lucide-react';
+import { SkeletonTable } from '../../components/Skeleton';
 
 export default function AttendanceMark() {
   const queryClient = useQueryClient();
@@ -141,9 +142,7 @@ export default function AttendanceMark() {
       {/* Students list */}
       <div className="glass-card overflow-hidden">
         {studentsLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-          </div>
+          <SkeletonTable rows={5} cols={3} />
         ) : studentsList.length > 0 ? (
           <div>
             <table className="custom-table">

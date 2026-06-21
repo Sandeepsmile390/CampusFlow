@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axiosInstance from '../../utils/axios';
 import { FileSpreadsheet, Download, Printer, Search, Loader2 } from 'lucide-react';
+import { SkeletonTable } from '../../components/Skeleton';
 
 export default function Reports() {
   const [reportType, setReportType] = useState('attendance'); // attendance, marks, fees, placements
@@ -115,7 +116,7 @@ export default function Reports() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 print:hidden">
         <div>
           <h1 className="text-3xl font-display font-extrabold tracking-tight">Institutional Reports</h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">Download official registers, performance analyses and collection lists.</p>
+          <p className="text-slate-550 dark:text-slate-400 text-sm">Download official registers, performance analyses and collection lists.</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={handleExportCSV} disabled={!reportData} className="btn-secondary text-xs px-4 py-2.5 flex items-center gap-2">
@@ -162,14 +163,12 @@ export default function Reports() {
         {/* Printable Title Block */}
         <div className="hidden print:block text-center py-6 border-b-2 border-black space-y-2">
           <h2 className="text-2xl font-bold font-display uppercase tracking-wider">Aegis University ERP system</h2>
-          <p className="text-sm font-semibold uppercase tracking-widest text-slate-600">Official Institutional Report: {reportType.toUpperCase()}</p>
+          <p className="text-sm font-semibold uppercase tracking-widest text-slate-650">Official Institutional Report: {reportType.toUpperCase()}</p>
           <p className="text-xs text-slate-400">Generated: {new Date().toLocaleString()} | Semester: {semester}</p>
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-          </div>
+          <SkeletonTable rows={6} cols={6} />
         ) : reportData?.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="custom-table print:text-black">

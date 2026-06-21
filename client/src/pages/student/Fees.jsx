@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '../../utils/axios';
 import { useAuthStore } from '../../store/authStore';
 import { IndianRupee, Clipboard, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
+import { SkeletonTable } from '../../components/Skeleton';
 
 export default function Fees() {
   const queryClient = useQueryClient();
@@ -60,9 +61,7 @@ export default function Fees() {
 
       <div className="glass-card overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-          </div>
+          <SkeletonTable rows={4} cols={6} />
         ) : fees?.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="custom-table">

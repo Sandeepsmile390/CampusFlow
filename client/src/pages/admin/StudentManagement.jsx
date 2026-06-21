@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+import { SkeletonTable } from '../../components/Skeleton';
 
 const studentSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -252,7 +253,7 @@ export default function StudentManagement() {
       <div className="glass-card flex flex-col md:flex-row items-center gap-4 p-4">
         {/* Search */}
         <div className="relative flex-1 w-full">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-550">
             <Search className="h-4 w-4" />
           </span>
           <input
@@ -304,9 +305,7 @@ export default function StudentManagement() {
       {/* Student List Table */}
       <div className="glass-card overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-          </div>
+          <SkeletonTable rows={5} cols={6} />
         ) : studentsRes?.data?.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="custom-table">
