@@ -50,7 +50,7 @@ export default function DashboardLayout({ children }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const { unreadCount, fetchNotifications, togglePanel } = useNotificationStore();
+  const { fetchNotifications } = useNotificationStore();
 
   
   // AI assistant states
@@ -396,22 +396,9 @@ export default function DashboardLayout({ children }) {
               <span>AI Chat Panel</span>
             </button>
 
-            {/* Notification bell */}
-            <div className="relative">
-              <button
-                onClick={togglePanel}
-                className="relative p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900/60 cursor-pointer text-slate-500 dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-white transition-colors"
-                aria-label="Notifications"
-              >
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 min-w-[16px] h-4 px-0.5 bg-[#14B8A6] text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-slate-950 leading-none">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </button>
-              <NotificationPanel />
-            </div>
+            {/* Notification bell — self-contained (button + dropdown) */}
+            <NotificationPanel />
+
 
           </div>
         </header>

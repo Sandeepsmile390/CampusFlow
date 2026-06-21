@@ -34,15 +34,20 @@ function timeAgo(dateStr) {
   return `${days}d ago`;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// NotificationPanel — self-contained bell button + dropdown
+// The bell trigger is INSIDE the ref so outside-click detection works correctly
+// ─────────────────────────────────────────────────────────────────────────────
 export default function NotificationPanel() {
   const navigate  = useNavigate();
-  const panelRef  = useRef(null);
+  const wrapperRef = useRef(null); // wraps BOTH the bell button and the dropdown
   const {
     notifications,
     unreadCount,
     isLoading,
     panelOpen,
     closePanel,
+    togglePanel,
     markAsRead,
     markAllRead,
     deleteNotification,
@@ -54,14 +59,23 @@ export default function NotificationPanel() {
     if (panelOpen) fetchNotifications();
   }, [panelOpen]);
 
-  // Close on outside click
+  // Close when clicking outside the entire wrapper (bell + dropdown)
   useEffect(() => {
     function onOutside(e) {
-      if (panelRef.current && !panelRef.current.contains(e.target)) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
         closePanel();
       }
     }
-    if (panelOpen) document.addEventListener('mousedown', onOutside);
+    if (panelOpen) {
+      // Use setTimeout to avoid catching the same click that opened the panel
+      const timer = setTimeout(() => {
+        document.addEventListener('mousedown', onOutside);
+      }, 0);
+      return () => {
+        clearTimeout(timer);
+        document.removeEventListener('mousedown', onOutside);
+      };
+    }
     return () => document.removeEventListener('mousedown', onOutside);
   }, [panelOpen]);
 
@@ -74,17 +88,34 @@ export default function NotificationPanel() {
   }
 
   return (
-    <div ref={panelRef} className="relative">
+    // wrapperRef covers BOTH the bell trigger and the dropdown panel
+    <div ref={wrapperRef} className="relative">
+
+      {/* ── Bell trigger button ── */}
+      <button
+        onClick={togglePanel}
+        className="relative p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900/60 cursor-pointer text-slate-500 dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-white transition-colors"
+        aria-label="Notifications"
+      >
+        <Bell className="h-5 w-5" />
+        {unreadCount > 0 && (
+          <span className="absolute top-1 right-1 min-w-[16px] h-4 px-0.5 bg-[#14B8A6] text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-slate-950 leading-none">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {/* ── Dropdown panel ── */}
       <AnimatePresence>
         {panelOpen && (
           <motion.div
             initial={{ opacity: 0, y: 8, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.97 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="absolute right-0 top-3 w-[360px] max-w-[calc(100vw-2rem)] z-50 rounded-2xl shadow-2xl border overflow-hidden"
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="absolute right-0 top-full mt-2 w-[360px] max-w-[calc(100vw-2rem)] z-[200] rounded-2xl shadow-2xl border overflow-hidden"
             style={{
-              background: 'var(--panel-bg, #0f172a)',
+              background: '#0f172a',
               borderColor: 'rgba(255,255,255,0.08)'
             }}
           >
@@ -120,7 +151,7 @@ export default function NotificationPanel() {
             </div>
 
             {/* Body */}
-            <div className="max-h-[420px] overflow-y-auto scrollbar-thin">
+            <div className="max-h-[420px] overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center py-12 gap-2 text-slate-500">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -136,14 +167,10 @@ export default function NotificationPanel() {
                   {notifications.map((n) => {
                     const cfg = typeConfig[n.type] || typeConfig.INFO;
                     return (
-                      <motion.div
+                      <div
                         key={n.id}
-                        layout
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 10 }}
                         className={`group relative flex gap-3 px-4 py-3 border-b border-white/5 cursor-pointer transition-colors ${
-                          !n.isRead ? 'bg-white/[0.03]' : 'hover:bg-white/[0.02]'
+                          !n.isRead ? 'bg-white/[0.03] hover:bg-white/[0.05]' : 'hover:bg-white/[0.02]'
                         }`}
                         onClick={() => handleClick(n)}
                       >
@@ -153,7 +180,7 @@ export default function NotificationPanel() {
                         </div>
 
                         {/* Content */}
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 pr-5">
                           <p className={`text-sm font-medium leading-snug ${!n.isRead ? 'text-white' : 'text-slate-300'}`}>
                             {n.title}
                           </p>
@@ -176,7 +203,7 @@ export default function NotificationPanel() {
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
-                      </motion.div>
+                      </div>
                     );
                   })}
                 </div>
