@@ -42,15 +42,32 @@ const StudentPlacements = lazy(() => import('../pages/student/Placements'));
 const ParentDashboard = lazy(() => import('../pages/parent/Dashboard'));
 const Discussions = lazy(() => import('../pages/shared/Discussions'));
 
+// Full-screen loading splash shown while the refresh token call is in flight
+function SessionLoader() {
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0F172A] gap-4">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-xl bg-campus-gradient flex items-center justify-center shadow-lg">
+          <Loader2 className="h-5 w-5 text-white animate-spin" />
+        </div>
+        <span className="text-white font-bold text-xl tracking-tight">CampusFlow</span>
+      </div>
+      <p className="text-slate-500 text-sm">Restoring your session…</p>
+    </div>
+  );
+}
+
 // Route guards
 function AuthGuard({ children }) {
   const { isAuthenticated, isLoading } = useAuthStore();
-  
-  if (isLoading) return <PageLoader />;
+
+  // While the /auth/refresh call is in flight, show the splash — never redirect
+  if (isLoading) return <SessionLoader />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  
+
   return children;
 }
+
 
 function GuestGuard({ children }) {
   const { isAuthenticated, user, isLoading } = useAuthStore();
