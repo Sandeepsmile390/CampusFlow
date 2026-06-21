@@ -50,5 +50,10 @@ implementation_plan.md
 *.mp4
 *.tempmediaStorage/
 
+# Allow public assets (favicon etc.)
+!client/public/*.png
+!client/public/*.ico
+!client/public/*.svg
+
 # Scratch / Temp scripts
 scratch/
