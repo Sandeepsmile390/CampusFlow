@@ -21,11 +21,17 @@ function App() {
   const initTheme = useThemeStore((state) => state.initTheme);
   const setSession = useAuthStore((state) => state.setSession);
   const setLoading = useAuthStore((state) => state.setLoading);
+  const isRestored = useAuthStore((state) => state.isRestored);
+  const setRestored = useAuthStore((state) => state.setRestored);
 
   // Initialize theme and attempt silent session refresh on load
   useEffect(() => {
     initTheme();
     
+    // Prevent duplicate calls during StrictMode double mount
+    if (useAuthStore.getState().isRestored) return;
+    useAuthStore.getState().setRestored(true);
+
     const restoreSession = async () => {
       try {
         const res = await axiosInstance.post('/auth/refresh');

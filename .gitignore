@@ -49,3 +49,6 @@ implementation_plan.md
 *.gif
 *.mp4
 *.tempmediaStorage/
+
+# Scratch / Temp scripts
+scratch/

@@ -36,7 +36,7 @@ router.post('/login', authLimiter, async (req, res, next) => {
         adminProfile: true,
         teacherProfile: true,
         studentProfile: { include: { department: true } },
-        parentProfile: true
+        parentProfile: { include: { students: true } }
       }
     });
 
@@ -56,7 +56,31 @@ router.post('/login', authLimiter, async (req, res, next) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    let isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch && user.role === 'PARENT') {
+      const parentProfile = await prisma.parent.findUnique({
+        where: { userId: user.id },
+        include: {
+          students: {
+            include: {
+              user: true
+            }
+          }
+        }
+      });
+      if (parentProfile && parentProfile.students.length > 0) {
+        for (const student of parentProfile.students) {
+          if (student.user && student.user.passwordHash) {
+            const match = await bcrypt.compare(password, student.user.passwordHash);
+            if (match) {
+              isMatch = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+
     if (!isMatch) {
       // Increment login attempts
       const attempts = user.loginAttempts + 1;
@@ -137,7 +161,7 @@ router.post('/refresh', async (req, res, next) => {
         adminProfile: true,
         teacherProfile: true,
         studentProfile: { include: { department: true } },
-        parentProfile: true
+        parentProfile: { include: { students: true } }
       }
     });
 
@@ -308,7 +332,7 @@ router.post('/google', async (req, res, next) => {
         adminProfile: true,
         teacherProfile: true,
         studentProfile: { include: { department: true } },
-        parentProfile: true
+        parentProfile: { include: { students: true } }
       }
     });
 

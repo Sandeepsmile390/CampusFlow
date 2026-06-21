@@ -599,54 +599,44 @@ export default function DashboardLayout({ children }) {
       </AnimatePresence>
 
       {/* 6. Mobile Bottom Sheet Menu */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end bg-slate-950/60 backdrop-blur-sm">
-            {/* Click outside to close */}
-            <div className="absolute inset-0" onClick={() => setMobileMenuOpen(false)} />
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end bg-slate-950/60 backdrop-blur-sm">
+          {/* Click outside to close */}
+          <div className="absolute inset-0" onClick={() => setMobileMenuOpen(false)} />
+          
+          <div className="relative w-full glass-panel rounded-t-3xl border-t border-white/20 dark:border-slate-800 shadow-2xl p-6 space-y-6 max-h-[80vh] overflow-y-auto animate-in fade-in slide-in-from-bottom duration-300">
+            {/* Drag indicator line */}
+            <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto" onClick={() => setMobileMenuOpen(false)} />
             
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 250 }}
-              className="relative w-full glass-panel rounded-t-3xl border-t border-white/20 dark:border-slate-800 shadow-2xl p-6 space-y-6 max-h-[80vh] overflow-y-auto animate-in fade-in slide-in-from-bottom duration-300"
-            >
-              {/* Drag indicator line */}
-              <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto" onClick={() => setMobileMenuOpen(false)} />
-              
-              <div className="flex items-center justify-between border-b border-slate-200/30 dark:border-slate-800/30 pb-3">
-                <h3 className="font-bold text-base">Navigation Menu</h3>
-                <button onClick={() => setMobileMenuOpen(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"><X className="h-5 w-5" /></button>
-              </div>
+            <div className="flex items-center justify-between border-b border-slate-200/30 dark:border-slate-800/30 pb-3">
+              <h3 className="font-bold text-base">Navigation Menu</h3>
+              <button onClick={() => setMobileMenuOpen(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"><X className="h-5 w-5" /></button>
+            </div>
 
-              <div className="grid grid-cols-3 gap-4 pb-8">
-                {menuItems.map((item) => {
-                  const isActive = location.pathname === item.path;
-                  const Icon = item.icon;
-                  return (
-                    <div
-                      key={item.path}
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        navigate(item.path);
-                      }}
-                      className={`flex flex-col items-center gap-2 p-3 rounded-2xl cursor-pointer transition-all border ${
-                        isActive
-                          ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-650 dark:text-indigo-400'
-                          : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200/50 dark:border-slate-800/50 text-slate-600 dark:text-slate-400'
-                      }`}
-                    >
-                      <Icon className="h-6 w-6" />
-                      <span className="text-[10px] text-center font-semibold truncate w-full">{item.name}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
+            <div className="grid grid-cols-3 gap-4 pb-8">
+              {menuItems.map((item) => {
+                const isActive = location.pathname === item.path;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex flex-col items-center gap-2 p-3 rounded-2xl cursor-pointer transition-all border ${
+                      isActive
+                        ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-650 dark:text-indigo-400'
+                        : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200/50 dark:border-slate-800/50 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    <Icon className="h-6 w-6" />
+                    <span className="text-[10px] text-center font-semibold truncate w-full">{item.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
 
     </div>
   );
