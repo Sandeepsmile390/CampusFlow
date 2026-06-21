@@ -67,6 +67,10 @@ app.use((req, res, next) => {
 app.use(globalErrorHandler);
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`[SMS BACKEND SERVER] Running in ${process.env.NODE_ENV || 'development'} mode on http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`[SMS BACKEND SERVER] Running in ${process.env.NODE_ENV || 'development'} mode on http://localhost:${PORT}`);
+  });
+}
+
+export default app;
