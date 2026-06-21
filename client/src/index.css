@@ -1,0 +1,200 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans bg-[#F8FAFC] text-[#0F172A] transition-colors duration-300;
+  }
+  
+  body.dark {
+    @apply bg-[#020617] text-[#F8FAFC];
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold tracking-tight text-[#0F172A] dark:text-[#F8FAFC];
+  }
+}
+
+/* Gradients */
+.bg-campus-gradient {
+  background: linear-gradient(135deg, #4338CA 0%, #14B8A6 50%, #38BDF8 100%);
+}
+
+.bg-dark-gradient {
+  background: linear-gradient(135deg, #0F172A, #1E293B);
+}
+
+.text-campus-gradient {
+  background: linear-gradient(135deg, #4338CA 0%, #14B8A6 50%, #38BDF8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@layer components {
+  /* Premium Glassmorphism Card/Panel styles */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+  }
+
+  .dark .glass-panel {
+    background: rgba(15, 23, 42, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 24px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    @apply transition-all duration-300;
+  }
+
+  .dark .glass-card {
+    background: rgba(17, 24, 39, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  }
+
+  .glass-card-hover {
+    @apply transition-all duration-300 hover:scale-[1.02] hover:shadow-glow hover:border-brand-500/30;
+  }
+
+  /* Form Elements */
+  .glass-input {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    @apply w-full px-4 py-3 outline-none text-[#0F172A] placeholder-[#64748B] transition-all duration-300;
+  }
+
+  .dark .glass-input {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    @apply text-[#F8FAFC] placeholder-slate-500;
+  }
+
+  .glass-input:focus {
+    border-color: #4338CA;
+    box-shadow: 0 0 15px rgba(67, 56, 202, 0.2);
+  }
+
+  .dark .glass-input:focus {
+    border-color: #14B8A6;
+    box-shadow: 0 0 15px rgba(20, 184, 166, 0.2);
+  }
+
+  /* Dropdowns */
+  .glass-select {
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    @apply px-4 py-3 outline-none text-sm transition-all duration-300 cursor-pointer;
+  }
+
+  .dark .glass-select {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glass-select-option {
+    @apply bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-200 py-2;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background: linear-gradient(135deg, #4338CA 0%, #14B8A6 50%, #38BDF8 100%);
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(67, 56, 202, 0.25);
+    @apply px-6 py-3 font-medium text-white transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] outline-none;
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(67, 56, 202, 0.35);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    @apply px-6 py-3 font-medium text-[#0F172A] dark:text-[#F8FAFC] transition-all duration-300 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 hover:border-[#4338CA] outline-none;
+  }
+
+  .dark .btn-secondary {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Custom Table Styling */
+  .custom-table {
+    @apply w-full text-left border-collapse overflow-hidden;
+  }
+  
+  .custom-table th {
+    @apply px-6 py-4 font-semibold text-xs tracking-wider uppercase text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/40 backdrop-blur-md sticky top-0 z-10;
+  }
+
+  .custom-table tr {
+    @apply hover:bg-slate-100/30 dark:hover:bg-slate-800/10 transition-colors duration-200;
+  }
+
+  .custom-table tr:nth-child(even) {
+    background: rgba(248, 250, 252, 0.4);
+  }
+
+  .dark .custom-table tr:nth-child(even) {
+    background: rgba(15, 23, 42, 0.15);
+  }
+
+  .custom-table td {
+    @apply px-6 py-4 text-sm border-b border-slate-100 dark:border-slate-800/40 text-[#0F172A] dark:text-[#F8FAFC];
+  }
+
+  /* Glow Utilities */
+  .text-glow {
+    text-shadow: 0 0 12px rgba(67, 56, 202, 0.3);
+  }
+  
+  .border-glow {
+    box-shadow: 0 0 10px rgba(67, 56, 202, 0.1);
+  }
+}
+
+/* Custom Webkit Scrollbars for premium appearance */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 dark:bg-slate-800/80 rounded-full hover:bg-slate-300 dark:hover:bg-slate-700;
+}
+
+/* Skeleton Loading Animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.2);
+  }
+}
+
+.skeleton-pulse {
+  animation: pulse-glow 2s infinite ease-in-out;
+}

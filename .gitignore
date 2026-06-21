@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+/client/node_modules/
+/server/node_modules/
+/mobile/node_modules/
+
+# Env / Secrets
+.env
+.env.local
+.env.*.local
+*.env
+server/.env
+client/.env
+mobile/.env
+
+# Build & Output
+dist/
+build/
+bin/
+obj/
+out/
+.expo/
+web-build/
+client/dist/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Editor & System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.claude/
+.gemini/
+antigravity-ide/
+.system_generated/
+walkthrough.md
+task.md
+implementation_plan.md
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.mp4
+*.tempmediaStorage/

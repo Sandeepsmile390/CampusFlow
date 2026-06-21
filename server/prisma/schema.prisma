@@ -1,0 +1,364 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+  PARENT
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+}
+
+enum FeeStatus {
+  PAID
+  PENDING
+  OVERDUE
+}
+
+enum PlacementAppStatus {
+  APPLIED
+  SHORTLISTED
+  REJECTED
+  PLACED
+}
+
+enum NoticeCategory {
+  GENERAL
+  EXAM
+  HOLIDAY
+  PLACEMENT
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String
+  role          Role
+  isBlocked     Boolean   @default(false)
+  loginAttempts Int       @default(0)
+  lockUntil     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  adminProfile   Admin?
+  teacherProfile Teacher?
+  studentProfile Student?
+  parentProfile  Parent?
+  postedNotices  Notice[]
+  auditLogs      AuditLog[]
+  createdGroups  DiscussionGroup[]   @relation("GroupCreator")
+  discussionMessages DiscussionMessage[]
+
+  @@index([email])
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  phone        String?
+  profilePhoto String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Teacher {
+  id           String      @id @default(uuid())
+  userId       String      @unique
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  phone        String?
+  profilePhoto String?
+  qualifications String
+  experience   Int
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  deletedAt    DateTime?
+
+  schedules        ClassSchedule[]
+  assignments      Assignment[]
+  markedAttendance Attendance[]
+
+  @@index([departmentId])
+}
+
+model Student {
+  id           String      @id @default(uuid())
+  userId       String      @unique
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  rollNumber   String      @unique
+  phone        String?
+  profilePhoto String?
+  address      String?
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  semester     Int         @default(1)
+  admissionDate DateTime   @default(now())
+  
+  parentName   String
+  parentEmail  String
+  parentPhone  String
+  parentId     String?
+  parent       Parent?     @relation(fields: [parentId], references: [id], onDelete: SetNull)
+  
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  deletedAt    DateTime?
+
+  attendance   Attendance[]
+  submissions  AssignmentSubmission[]
+  fees         Fee[]
+  placements   PlacementApplication[]
+
+  @@index([rollNumber])
+  @@index([departmentId, semester])
+  @@index([parentId])
+}
+
+model Parent {
+  id           String    @id @default(uuid())
+  userId       String    @unique
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  phone        String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  students     Student[]
+}
+
+model Department {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  code      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  courses   Course[]
+  teachers  Teacher[]
+  students  Student[]
+  discussionGroups DiscussionGroup[]
+}
+
+model Course {
+  id           String      @id @default(uuid())
+  name         String
+  code         String      @unique
+  credits      Int
+  departmentId String
+  department   Department  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  semester     Int
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  deletedAt    DateTime?
+
+  schedules    ClassSchedule[]
+  attendance   Attendance[]
+  assignments  Assignment[]
+  discussionGroups DiscussionGroup[]
+
+  @@index([departmentId, semester])
+}
+
+model ClassSchedule {
+  id         String   @id @default(uuid())
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teacherId  String
+  teacher    Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  dayOfWeek  String   // e.g. MONDAY, TUESDAY
+  startTime  String   // e.g. "09:00"
+  endTime    String   // e.g. "10:30"
+  room       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([courseId])
+  @@index([teacherId])
+}
+
+model Attendance {
+  id           String           @id @default(uuid())
+  studentId    String
+  student      Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseId     String
+  course       Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  date         DateTime         // Just the date (YYYY-MM-DD)
+  status       AttendanceStatus
+  markedById   String
+  markedBy     Teacher          @relation(fields: [markedById], references: [id], onDelete: Cascade)
+  method       String           @default("MANUAL") // MANUAL, QR, FACE
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([studentId, courseId, date])
+  @@index([studentId, courseId])
+  @@index([date])
+}
+
+model Assignment {
+  id           String                 @id @default(uuid())
+  title        String
+  description  String
+  filePath     String?
+  deadline     DateTime
+  courseId     String
+  course       Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teacherId    String
+  teacher      Teacher                @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  deletedAt    DateTime?
+
+  submissions  AssignmentSubmission[]
+
+  @@index([courseId])
+  @@index([teacherId])
+}
+
+model AssignmentSubmission {
+  id           String     @id @default(uuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  filePath     String
+  submittedAt  DateTime   @default(now())
+  grade        String?
+  feedback     String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([assignmentId, studentId])
+  @@index([studentId])
+}
+
+model Fee {
+  id            String    @id @default(uuid())
+  studentId     String
+  student       Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  amount        Float
+  dueDate       DateTime
+  status        FeeStatus @default(PENDING)
+  transactionId String?
+  paidAt        DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([studentId])
+}
+
+model Placement {
+  id                  String                 @id @default(uuid())
+  company             String
+  role                String
+  salaryPackage       String
+  requirements        String
+  eligibilityCriteria String
+  deadline            DateTime
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  deletedAt           DateTime?
+
+  applications        PlacementApplication[]
+}
+
+model PlacementApplication {
+  id          String             @id @default(uuid())
+  placementId String
+  placement   Placement          @relation(fields: [placementId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  resumeUrl   String?
+  status      PlacementAppStatus @default(APPLIED)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@unique([placementId, studentId])
+  @@index([studentId])
+}
+
+model Notice {
+  id          String         @id @default(uuid())
+  title       String
+  content     String
+  category    NoticeCategory
+  postedById  String
+  postedBy    User           @relation(fields: [postedById], references: [id], onDelete: Cascade)
+  expiresAt   DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([category])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  ipAddress String?
+  userAgent String?
+  timestamp DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model DiscussionGroup {
+  id            String              @id @default(uuid())
+  name          String
+  description   String?
+  departmentId  String?
+  department    Department?         @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  courseId      String?
+  course        Course?             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdById   String
+  createdBy     User                @relation("GroupCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  messages      DiscussionMessage[]
+
+  @@index([departmentId])
+  @@index([courseId])
+}
+
+model DiscussionMessage {
+  id         String          @id @default(uuid())
+  groupId    String
+  group      DiscussionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  senderId   String
+  sender     User            @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content    String
+  createdAt  DateTime        @default(now())
+
+  @@index([groupId])
+  @@index([senderId])
+}
