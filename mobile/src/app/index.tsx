@@ -42,7 +42,9 @@ import {
   GraduationCap,
   Users,
   BookMarked,
-  Award
+  Award,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
@@ -51,11 +53,29 @@ const { width } = Dimensions.get('window');
 const API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5001/api/v1' : 'http://localhost:5001/api/v1';
 
 export default function MobileDashboard() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('student.john@university.edu');
+  const [password, setPassword] = useState('password123');
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [accessToken, setAccessToken] = useState('');
+  const [selectedRole, setSelectedRole] = useState<'STUDENT' | 'TEACHER' | 'ADMIN' | 'PARENT'>('STUDENT');
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+
+  useEffect(() => {
+    if (selectedRole === 'STUDENT') {
+      setEmail('student.john@university.edu');
+      setPassword('password123');
+    } else if (selectedRole === 'TEACHER') {
+      setEmail('teacher.dbms@university.edu');
+      setPassword('password123');
+    } else if (selectedRole === 'ADMIN') {
+      setEmail('admin@university.edu');
+      setPassword('password123');
+    } else if (selectedRole === 'PARENT') {
+      setEmail('parent.doe@gmail.com');
+      setPassword('password123');
+    }
+  }, [selectedRole]);
 
   // Custom fetch wrapper that automatically injects CSRF headers and Authorization JWT
   const customFetch = async (url: string, options: any = {}) => {
@@ -1083,10 +1103,52 @@ export default function MobileDashboard() {
           </View>
 
           <View style={styles.glassForm}>
-            <Text style={styles.formTitle}>Sign In</Text>
+            <Text style={styles.formTitle}>Sign In to portal</Text>
+            <Text style={styles.formSubtitle}>Enter your credentials to enter ERP system</Text>
 
+            {/* Access Role Dropdown */}
             <View style={styles.inputWrapper}>
-              <Text style={styles.inputLabel}>Email Address</Text>
+              <Text style={styles.inputLabel}>ACCESS ROLE</Text>
+              <TouchableOpacity
+                onPress={() => setShowRoleDropdown(!showRoleDropdown)}
+                style={styles.dropdownTrigger}
+              >
+                <Text style={styles.dropdownTriggerText}>
+                  {selectedRole === 'STUDENT' ? 'Student' : selectedRole === 'TEACHER' ? 'Teacher' : selectedRole === 'ADMIN' ? 'Admin' : 'Parent'}
+                </Text>
+                {showRoleDropdown ? <ChevronUp size={18} color="#94A3B8" /> : <ChevronDown size={18} color="#94A3B8" />}
+              </TouchableOpacity>
+              {showRoleDropdown && (
+                <View style={styles.dropdownMenu}>
+                  {(['STUDENT', 'TEACHER', 'ADMIN', 'PARENT'] as const).map((r) => (
+                    <TouchableOpacity
+                      key={r}
+                      onPress={() => {
+                        setSelectedRole(r);
+                        setShowRoleDropdown(false);
+                      }}
+                      style={[
+                        styles.dropdownItem,
+                        selectedRole === r && styles.dropdownItemActive
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.dropdownItemText,
+                          selectedRole === r && styles.dropdownItemTextActive
+                        ]}
+                      >
+                        {r === 'STUDENT' ? 'Student' : r === 'TEACHER' ? 'Teacher' : r === 'ADMIN' ? 'Admin' : 'Parent'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {/* Email Address */}
+            <View style={styles.inputWrapper}>
+              <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
               <View style={styles.inputFieldContainer}>
                 <Mail size={18} color="#94A3B8" />
                 <TextInput
@@ -1101,8 +1163,14 @@ export default function MobileDashboard() {
               </View>
             </View>
 
+            {/* Password with Forgot Password link */}
             <View style={styles.inputWrapper}>
-              <Text style={styles.inputLabel}>Password</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <Text style={[styles.inputLabel, { marginBottom: 0 }]}>PASSWORD</Text>
+                <TouchableOpacity onPress={() => Alert.alert('Reset Token', 'Check database reset tokens flow.')}>
+                  <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                </TouchableOpacity>
+              </View>
               <View style={styles.inputFieldContainer}>
                 <Lock size={18} color="#94A3B8" />
                 <TextInput
@@ -1125,15 +1193,15 @@ export default function MobileDashboard() {
               {loading ? (
                 <ActivityIndicator color="#FFF" />
               ) : (
-                <Text style={styles.signInButtonText}>Sign In</Text>
+                <Text style={styles.signInButtonText}>Sign In to Account →</Text>
               )}
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.mockTitle}>Preset Quick Login Actions</Text>
+          <Text style={styles.mockTitle}>Development Simulator Logins</Text>
           <View style={styles.mockButtonsContainer}>
             <TouchableOpacity
-              onPress={() => handleLogin('admin@university.edu', 'password123')}
+              onPress={() => { setSelectedRole('ADMIN'); handleLogin('admin@university.edu', 'password123'); }}
               style={styles.mockButton}
             >
               <UserCheck size={14} color="#EF4444" />
@@ -1141,7 +1209,7 @@ export default function MobileDashboard() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => handleLogin('teacher.dbms@university.edu', 'password123')}
+              onPress={() => { setSelectedRole('TEACHER'); handleLogin('teacher.dbms@university.edu', 'password123'); }}
               style={styles.mockButton}
             >
               <GraduationCap size={14} color="#4338CA" />
@@ -1149,7 +1217,7 @@ export default function MobileDashboard() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => handleLogin('student.john@university.edu', 'password123')}
+              onPress={() => { setSelectedRole('STUDENT'); handleLogin('student.john@university.edu', 'password123'); }}
               style={styles.mockButton}
             >
               <UserCheck size={14} color="#14B8A6" />
@@ -1157,7 +1225,7 @@ export default function MobileDashboard() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => handleLogin('parent.doe@gmail.com', 'password123')}
+              onPress={() => { setSelectedRole('PARENT'); handleLogin('parent.doe@gmail.com', 'password123'); }}
               style={styles.mockButton}
             >
               <Users size={14} color="#38BDF8" />
@@ -1243,40 +1311,131 @@ export default function MobileDashboard() {
       {/* Main Tab Screen Switcher */}
       {activeTab === 'DASHBOARD' && (
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Quick operations headers */}
+          {/* 1. WELCOME HERO CARD */}
+          <View style={styles.dashboardHeroCard}>
+            <Text style={styles.heroTitle}>
+              {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 17 ? 'Good Afternoon' : 'Good Evening'} 👋
+            </Text>
+            <Text style={styles.heroSubtitle}>
+              {user.role === 'STUDENT'
+                ? `Welcome back, ${user.profile?.name || 'Student'}. Manage your courses, view grades, and check timetables efficiently.`
+                : user.role === 'TEACHER'
+                ? `Welcome back, ${user.profile?.name || 'Teacher'}. Manage schedules, verify grade inputs, and generate class reports.`
+                : `Welcome back, Administrator. Access roster logs, publish bulletins, and assign department mapped timetables.`}
+            </Text>
+          </View>
+
+          {/* 2. STATS GRID */}
           {user.role === 'STUDENT' && (
-            <View style={styles.quickGrid}>
-              <TouchableOpacity onPress={() => setQrModalVisible(true)} style={styles.quickCard}>
-                <View style={[styles.quickIconCircle, { backgroundColor: 'rgba(20, 184, 166, 0.1)' }]}>
-                  <QrCode size={22} color="#14B8A6" />
+            <View style={styles.statsCardGrid}>
+              <View style={styles.statDoubleCard}>
+                <View style={styles.statItemCard}>
+                  <View style={styles.statHeaderRow}>
+                    <Text style={styles.statCardTitle}>CUMULATIVE GPA</Text>
+                    <View style={[styles.statIconCircle, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
+                      <Award size={16} color="#6366F1" />
+                    </View>
+                  </View>
+                  <Text style={styles.statCardValue}>9.50 / 10.0</Text>
+                  <Text style={styles.statCardSubtitle}>Excellent Standing</Text>
                 </View>
-                <Text style={styles.quickTitle}>QR Scanner</Text>
-                <Text style={styles.quickDesc}>Log Class Check-In</Text>
-              </TouchableOpacity>
+                <View style={styles.statItemCard}>
+                  <View style={styles.statHeaderRow}>
+                    <Text style={styles.statCardTitle}>TOTAL ATTENDANCE</Text>
+                    <View style={[styles.statIconCircle, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+                      <CheckCircle size={16} color="#10B981" />
+                    </View>
+                  </View>
+                  <Text style={styles.statCardValue}>
+                    {attendanceLogs.length > 0
+                      ? `${((attendanceLogs.filter(a => a.status === 'PRESENT').length / attendanceLogs.length) * 100).toFixed(1)}%`
+                      : '85.7%'}
+                  </Text>
+                  <Text style={styles.statCardSubtitle}>Compliant</Text>
+                </View>
+              </View>
+
+              <View style={styles.statDoubleCard}>
+                <View style={styles.statItemCard}>
+                  <View style={styles.statHeaderRow}>
+                    <Text style={styles.statCardTitle}>PENDING TASKS</Text>
+                    <View style={[styles.statIconCircle, { backgroundColor: 'rgba(56, 189, 248, 0.1)' }]}>
+                      <BookOpen size={16} color="#38BDF8" />
+                    </View>
+                  </View>
+                  <Text style={styles.statCardValue}>
+                    {assignments.filter(asg => !asg.submissions || asg.submissions.length === 0).length || '1'}
+                  </Text>
+                  <Text style={styles.statCardSubtitle}>Due shortly</Text>
+                </View>
+                <View style={styles.statItemCard}>
+                  <View style={styles.statHeaderRow}>
+                    <Text style={styles.statCardTitle}>FEE BALANCE</Text>
+                    <View style={[styles.statIconCircle, { backgroundColor: 'rgba(20, 184, 166, 0.1)' }]}>
+                      <IndianRupee size={16} color="#14B8A6" />
+                    </View>
+                  </View>
+                  <Text style={styles.statCardValue}>
+                    ₹{fees.reduce((acc, curr) => curr.status === 'PENDING' ? acc + curr.amount : acc, 0).toLocaleString('en-IN')}
+                  </Text>
+                  <Text style={styles.statCardSubtitle}>
+                    {fees.reduce((acc, curr) => curr.status === 'PENDING' ? acc + curr.amount : acc, 0) === 0 ? 'All Paid' : 'Pending Payment'}
+                  </Text>
+                </View>
+              </View>
             </View>
           )}
 
           {user.role === 'TEACHER' && (
-            <View style={styles.quickGrid}>
-              <TouchableOpacity onPress={() => setPublishModalVisible(true)} style={styles.quickCard}>
-                <View style={[styles.quickIconCircle, { backgroundColor: 'rgba(67, 56, 202, 0.1)' }]}>
-                  <Plus size={22} color="#4338CA" />
+            <View style={styles.statsCardGrid}>
+              <View style={styles.statDoubleCard}>
+                <View style={styles.statItemCard}>
+                  <View style={styles.statHeaderRow}>
+                    <Text style={styles.statCardTitle}>ASSIGNED CLASSES</Text>
+                    <View style={[styles.statIconCircle, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
+                      <BookMarked size={16} color="#6366F1" />
+                    </View>
+                  </View>
+                  <Text style={styles.statCardValue}>{schedules.length || '2'}</Text>
+                  <Text style={styles.statCardSubtitle}>Active slots</Text>
                 </View>
-                <Text style={styles.quickTitle}>New Notice</Text>
-                <Text style={styles.quickDesc}>Publish Board</Text>
-              </TouchableOpacity>
+                <View style={styles.statItemCard}>
+                  <View style={styles.statHeaderRow}>
+                    <Text style={styles.statCardTitle}>TOTAL STUDENT SCOPE</Text>
+                    <View style={[styles.statIconCircle, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+                      <Users size={16} color="#10B981" />
+                    </View>
+                  </View>
+                  <Text style={styles.statCardValue}>45</Text>
+                  <Text style={styles.statCardSubtitle}>Registered scope</Text>
+                </View>
+              </View>
 
-              <TouchableOpacity onPress={() => setAssignmentFormVisible(true)} style={styles.quickCard}>
-                <View style={[styles.quickIconCircle, { backgroundColor: 'rgba(20, 184, 166, 0.1)' }]}>
-                  <Plus size={22} color="#14B8A6" />
+              <View style={styles.statDoubleCard}>
+                <View style={styles.statItemCard}>
+                  <View style={styles.statHeaderRow}>
+                    <Text style={styles.statCardTitle}>PENDING GRADINGS</Text>
+                    <View style={[styles.statIconCircle, { backgroundColor: 'rgba(56, 189, 248, 0.1)' }]}>
+                      <ClipboardCheck size={16} color="#38BDF8" />
+                    </View>
+                  </View>
+                  <Text style={styles.statCardValue}>3</Text>
+                  <Text style={styles.statCardSubtitle}>Ungraded inputs</Text>
                 </View>
-                <Text style={styles.quickTitle}>Create Task</Text>
-                <Text style={styles.quickDesc}>Post homework</Text>
-              </TouchableOpacity>
+                <View style={styles.statItemCard}>
+                  <View style={styles.statHeaderRow}>
+                    <Text style={styles.statCardTitle}>CLASSES TODAY</Text>
+                    <View style={[styles.statIconCircle, { backgroundColor: 'rgba(20, 184, 166, 0.1)' }]}>
+                      <Calendar size={16} color="#14B8A6" />
+                    </View>
+                  </View>
+                  <Text style={styles.statCardValue}>2</Text>
+                  <Text style={styles.statCardSubtitle}>Lectures today</Text>
+                </View>
+              </View>
             </View>
           )}
 
-          {/* Admin Stats Dash */}
           {user.role === 'ADMIN' && (
             <View style={styles.adminStatsRow}>
               <View style={styles.statMiniCard}>
@@ -1297,22 +1456,106 @@ export default function MobileDashboard() {
             </View>
           )}
 
-          {/* Financial summary student view */}
-          {user.role === 'STUDENT' && fees.length > 0 && (
-            <View style={styles.financeBanner}>
-              <View style={styles.financeRow}>
-                <View style={styles.financeIcon}>
-                  <IndianRupee size={20} color="#FFF" />
+          {/* 3. PERFORMANCE CHART (STUDENT ONLY) */}
+          {user.role === 'STUDENT' && (
+            <View style={styles.chartContainerCard}>
+              <Text style={styles.chartCardTitle}>Subject Performance Analysis</Text>
+              <View style={styles.chartContentWrapper}>
+                {/* Y Axis */}
+                <View style={styles.chartYAxis}>
+                  <Text style={styles.chartYLabel}>10</Text>
+                  <Text style={styles.chartYLabel}>6</Text>
+                  <Text style={styles.chartYLabel}>3</Text>
+                  <Text style={styles.chartYLabel}>0</Text>
                 </View>
-                <View style={{ marginLeft: 12 }}>
-                  <Text style={styles.financeLabel}>Outstanding Invoices</Text>
-                  <Text style={styles.financeValue}>₹{fees.reduce((acc, curr) => curr.status === 'PENDING' ? acc + curr.amount : acc, 0).toLocaleString('en-IN')}</Text>
+
+                {/* Bars Area */}
+                <View style={styles.chartBarsArea}>
+                  <View style={styles.chartBarCol}>
+                    <View style={styles.chartBarTrack}>
+                      <View style={[styles.chartBarFill, { height: '90%' }]} />
+                    </View>
+                    <Text style={styles.chartBarLabel}>CSE-302</Text>
+                  </View>
+                  <View style={styles.chartBarCol}>
+                    <View style={styles.chartBarTrack}>
+                      <View style={[styles.chartBarFill, { height: '100%' }]} />
+                    </View>
+                    <Text style={styles.chartBarLabel}>CSE-301</Text>
+                  </View>
                 </View>
               </View>
             </View>
           )}
 
-          {/* Timetable schedule list */}
+          {/* 4. UPCOMING SCHEDULES / WEEKLY TIMETABLE TABLE */}
+          {user.role === 'STUDENT' && (
+            <View style={styles.upcomingSchedulesCard}>
+              <Text style={styles.upcomingTitleText}>Upcoming Schedules</Text>
+              <View style={[styles.upcomingItemCard, { borderLeftColor: '#EF4444' }]}>
+                <View style={styles.upcomingBadgeRow}>
+                  <View style={[styles.upcomingBadge, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
+                    <Text style={[styles.upcomingBadgeText, { color: '#EF4444' }]}>EXAM RETEST</Text>
+                  </View>
+                </View>
+                <Text style={styles.upcomingCourseName}>Operating Systems Midterm</Text>
+                <Text style={styles.upcomingTimeText}>Dec 8th at 10:00 AM | Room LH-102</Text>
+              </View>
+
+              <View style={[styles.upcomingItemCard, { borderLeftColor: '#38BDF8' }]}>
+                <View style={styles.upcomingBadgeRow}>
+                  <View style={[styles.upcomingBadge, { backgroundColor: 'rgba(56, 189, 248, 0.1)' }]}>
+                    <Text style={[styles.upcomingBadgeText, { color: '#38BDF8' }]}>LAB VIVA</Text>
+                  </View>
+                </View>
+                <Text style={styles.upcomingCourseName}>Database Systems Lab Exam</Text>
+                <Text style={styles.upcomingTimeText}>Dec 12th at 2:00 PM | Room DBMS Lab</Text>
+              </View>
+            </View>
+          )}
+
+          {user.role === 'TEACHER' && (
+            <View style={styles.upcomingSchedulesCard}>
+              <Text style={styles.upcomingTitleText}>Weekly Lecture Timetable</Text>
+              <View style={styles.timetableTable}>
+                <View style={styles.tableHeaderRow}>
+                  <Text style={[styles.tableHeaderCell, { flex: 1.2 }]}>DAY</Text>
+                  <Text style={[styles.tableHeaderCell, { flex: 1.2 }]}>SUB CODE</Text>
+                  <Text style={[styles.tableHeaderCell, { flex: 2.2 }]}>COURSE NAME</Text>
+                  <Text style={[styles.tableHeaderCell, { flex: 1.8 }]}>LECTURE SLOT</Text>
+                  <Text style={[styles.tableHeaderCell, { flex: 1.2 }]}>ROOM</Text>
+                </View>
+                {schedules.length > 0 ? (
+                  schedules.map((item, idx) => (
+                    <View key={item.id || idx} style={styles.tableBodyRow}>
+                      <Text style={[styles.tableBodyCell, { flex: 1.2, fontWeight: '700' }]}>{item.dayOfWeek}</Text>
+                      <Text style={[styles.tableBodyCell, { flex: 1.2, color: '#38BDF8' }]}>{item.course?.code}</Text>
+                      <Text style={[styles.tableBodyCell, { flex: 2.2 }]}>{item.course?.name}</Text>
+                      <Text style={[styles.tableBodyCell, { flex: 1.8 }]}>{item.startTime} - {item.endTime}</Text>
+                      <Text style={[styles.tableBodyCell, { flex: 1.2 }]}>{item.room}</Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.emptyText}>No timetables schedules mapped.</Text>
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* Quick operations actions (e.g. Scan) */}
+          {user.role === 'STUDENT' && (
+            <View style={[styles.quickGrid, { marginTop: 12 }]}>
+              <TouchableOpacity onPress={() => setQrModalVisible(true)} style={styles.quickCard}>
+                <View style={[styles.quickIconCircle, { backgroundColor: 'rgba(20, 184, 166, 0.1)' }]}>
+                  <QrCode size={22} color="#14B8A6" />
+                </View>
+                <Text style={styles.quickTitle}>QR Scanner</Text>
+                <Text style={styles.quickDesc}>Log Class Check-In</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Timetable agenda fallback */}
           {user.role !== 'ADMIN' && user.role !== 'PARENT' && (
             <>
               <Text style={styles.sectionTitle}>Daily Class Agenda</Text>
@@ -3469,5 +3712,261 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 8,
     lineHeight: 16,
+  },
+  formSubtitle: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginBottom: 20,
+    marginTop: -16,
+    textAlign: 'center',
+  },
+  dropdownTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#0F172A',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 12,
+    height: 48,
+  },
+  dropdownTriggerText: {
+    color: '#FFF',
+    fontSize: 14,
+  },
+  dropdownMenu: {
+    backgroundColor: '#1E293B',
+    borderRadius: 12,
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  dropdownItemActive: {
+    backgroundColor: 'rgba(20, 184, 166, 0.1)',
+  },
+  dropdownItemText: {
+    color: '#94A3B8',
+    fontSize: 13,
+  },
+  dropdownItemTextActive: {
+    color: '#14B8A6',
+    fontWeight: 'bold',
+  },
+  forgotPasswordText: {
+    color: '#14B8A6',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  dashboardHeroCard: {
+    backgroundColor: 'rgba(30, 41, 59, 0.4)',
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+    marginBottom: 20,
+  },
+  heroTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginBottom: 8,
+  },
+  heroSubtitle: {
+    fontSize: 12,
+    color: '#94A3B8',
+    lineHeight: 18,
+  },
+  statsCardGrid: {
+    gap: 12,
+    marginBottom: 20,
+  },
+  statDoubleCard: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  statItemCard: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: 16,
+    padding: 14,
+  },
+  statHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statCardTitle: {
+    fontSize: 8,
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: 0.5,
+  },
+  statIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statCardValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFF',
+  },
+  statCardSubtitle: {
+    fontSize: 9,
+    color: '#64748B',
+    marginTop: 4,
+  },
+  chartContainerCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 20,
+  },
+  chartCardTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFF',
+    marginBottom: 16,
+  },
+  chartContentWrapper: {
+    flexDirection: 'row',
+    height: 160,
+    alignItems: 'stretch',
+  },
+  chartYAxis: {
+    width: 24,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingVertical: 10,
+  },
+  chartYLabel: {
+    color: '#64748B',
+    fontSize: 9,
+  },
+  chartBarsArea: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'flex-end',
+    borderLeftWidth: 1,
+    borderLeftColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    paddingLeft: 10,
+    paddingBottom: 4,
+  },
+  chartBarCol: {
+    alignItems: 'center',
+    width: 60,
+  },
+  chartBarTrack: {
+    height: 110,
+    width: 32,
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderRadius: 6,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+  },
+  chartBarFill: {
+    width: '100%',
+    backgroundColor: '#14B8A6',
+    borderRadius: 6,
+  },
+  chartBarLabel: {
+    color: '#94A3B8',
+    fontSize: 9,
+    marginTop: 6,
+  },
+  upcomingSchedulesCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 20,
+  },
+  upcomingTitleText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFF',
+    marginBottom: 12,
+  },
+  upcomingItemCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.01)',
+    borderLeftWidth: 3,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
+  },
+  upcomingBadgeRow: {
+    flexDirection: 'row',
+    marginBottom: 6,
+  },
+  upcomingBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  upcomingBadgeText: {
+    fontSize: 8,
+    fontWeight: '700',
+  },
+  upcomingCourseName: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  upcomingTimeText: {
+    color: '#64748B',
+    fontSize: 10,
+    marginTop: 4,
+  },
+  timetableTable: {
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.01)',
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.03)',
+  },
+  tableHeaderRow: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+  },
+  tableHeaderCell: {
+    color: '#64748B',
+    fontSize: 8,
+    fontWeight: '700',
+  },
+  tableBodyRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.02)',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+  },
+  tableBodyCell: {
+    color: '#CBD5E1',
+    fontSize: 9,
   }
 });
