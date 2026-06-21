@@ -114,7 +114,8 @@ export default function NotificationPanel() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.97 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="absolute right-0 top-full mt-2 w-[360px] max-w-[calc(100vw-2rem)] z-[200] rounded-2xl shadow-2xl border overflow-hidden"
+            className="absolute right-0 top-full mt-2 w-[360px] max-w-[calc(100vw-1rem)] z-[200] rounded-2xl shadow-2xl border overflow-hidden"
+
             style={{
               background: '#0f172a',
               borderColor: 'rgba(255,255,255,0.08)'

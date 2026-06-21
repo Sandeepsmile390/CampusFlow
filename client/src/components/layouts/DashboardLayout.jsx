@@ -337,18 +337,21 @@ export default function DashboardLayout({ children }) {
         <Link to="/">
           <Logo size="sm" className="text-white" />
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button onClick={toggleTheme} className="p-2 rounded-xl hover:bg-white/10">
             {theme === 'dark' ? <Sun className="h-5 w-5 text-amber-400" /> : <Moon className="h-5 w-5 text-sky-400" />}
           </button>
           <button onClick={() => setAiDrawerOpen(true)} className="p-2 rounded-xl bg-brand-teal/10 text-brand-teal hover:bg-brand-teal/20">
             <Bot className="h-5 w-5" />
           </button>
+          {/* Notification bell on mobile */}
+          <NotificationPanel />
           <button onClick={handleLogout} className="p-2 rounded-xl text-red-400 hover:bg-red-500/10">
             <LogOut className="h-5 w-5" />
           </button>
         </div>
       </header>
+
 
       {/* 3. Main Dashboard Workspace Content Area */}
       <main className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
