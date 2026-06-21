@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
+const apiBase = import.meta.env.VITE_API_URL || '';
+
 const axiosInstance = axios.create({
-  baseURL: '/api/v1',
+  baseURL: `${apiBase}/api/v1`,
   headers: {
     'Content-Type': 'application/json',
     'x-csrf-token': 'university_sms_secure_token',
@@ -67,7 +69,7 @@ axiosInstance.interceptors.response.use(
 
       try {
         // Call refresh endpoint to get rotated access/refresh tokens
-        const response = await axios.post('/auth/refresh', {}, {
+        const response = await axios.post(`${apiBase}/api/v1/auth/refresh`, {}, {
           headers: {
             'x-csrf-token': 'university_sms_secure_token',
             'x-requested-with': 'XMLHttpRequest'
