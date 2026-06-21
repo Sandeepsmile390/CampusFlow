@@ -13,7 +13,8 @@ import {
   Loader2,
   BellOff
 } from 'lucide-react';
-import { useNotificationStore } from '../../store/notificationStore';
+import { useNotificationStore } from '../store/notificationStore';
+
 
 // ── Icon + color per type ─────────────────────────────────────────────────────
 const typeConfig = {
