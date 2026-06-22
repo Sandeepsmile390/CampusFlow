@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Constants from 'expo-constants';
 import {
   StyleSheet,
   Text,
@@ -51,8 +52,23 @@ import {
 
 const { width } = Dimensions.get('window');
 
-// Automatically switch backend target depending on platform environment
-const API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5001/api/v1' : 'http://localhost:5001/api/v1';
+// Dynamically retrieve the host IP address in local Expo Go developments to bypass physical networking limits.
+const getHostApiUrl = () => {
+  try {
+    const hostUri = Constants.expoConfig?.hostUri;
+    if (hostUri) {
+      const hostIp = hostUri.split(':')[0];
+      if (hostIp && !hostIp.includes('localhost') && !hostIp.includes('127.0.0.1')) {
+        return `http://${hostIp}:5001/api/v1`;
+      }
+    }
+  } catch (err) {
+    console.log('Error parsing hostUri:', err);
+  }
+  return Platform.OS === 'android' ? 'http://10.0.2.2:5001/api/v1' : 'http://localhost:5001/api/v1';
+};
+
+let API_URL = getHostApiUrl();
 
 export default function MobileDashboard() {
   const [email, setEmail] = useState('student.john@university.edu');
@@ -62,6 +78,22 @@ export default function MobileDashboard() {
   const [accessToken, setAccessToken] = useState('');
   const [selectedRole, setSelectedRole] = useState<'STUDENT' | 'TEACHER' | 'ADMIN' | 'PARENT'>('STUDENT');
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+
+  // Server API settings state
+  const [serverUrl, setServerUrl] = useState(API_URL);
+  const [showServerConfig, setShowServerConfig] = useState(false);
+  const [newServerUrlInput, setNewServerUrlInput] = useState(API_URL);
+
+  const handleSaveServerUrl = () => {
+    if (!newServerUrlInput.trim()) {
+      Alert.alert('Validation Error', 'Server URL cannot be empty.');
+      return;
+    }
+    API_URL = newServerUrlInput.trim();
+    setServerUrl(newServerUrlInput.trim());
+    setShowServerConfig(false);
+    Alert.alert('Server Endpoint Updated', `The app will now connect to:\n${API_URL}`);
+  };
 
   useEffect(() => {
     if (selectedRole === 'STUDENT') {
@@ -1391,9 +1423,63 @@ export default function MobileDashboard() {
               <Text style={styles.mockButtonText}>Parent</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.apiLabelContainer}>
-            <Text style={styles.apiLabelText}>Server End: {API_URL}</Text>
-          </View>
+          <TouchableOpacity 
+            style={styles.apiLabelContainer} 
+            onPress={() => {
+              setNewServerUrlInput(API_URL);
+              setShowServerConfig(true);
+            }}
+          >
+            <Text style={styles.apiLabelText}>Server End: {serverUrl} (Tap to change)</Text>
+          </TouchableOpacity>
+
+          {/* SERVER ENDPOINT CONFIGURATION MODAL */}
+          <Modal visible={showServerConfig} transparent animationType="slide">
+            <View style={styles.modalBg}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Configure API Endpoint</Text>
+                  <TouchableOpacity onPress={() => setShowServerConfig(false)} style={styles.closeButton}>
+                    <X size={20} color="#64748B" />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.modalForm}>
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.inputLabel}>SERVER URL</Text>
+                    <TextInput 
+                      value={newServerUrlInput} 
+                      onChangeText={setNewServerUrlInput} 
+                      style={styles.modalInput} 
+                      placeholder="http://192.168.x.x:5001/api/v1" 
+                      placeholderTextColor="#64748B"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                    <Text style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+                      Enter your host machine's IP address (e.g. 192.168.1.x) or your deployment URL so Expo Go can communicate with the server.
+                    </Text>
+                  </View>
+
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginTop: 10 }}>
+                    <TouchableOpacity 
+                      onPress={() => {
+                        const defaultUrl = Platform.OS === 'android' ? 'http://10.0.2.2:5001/api/v1' : 'http://localhost:5001/api/v1';
+                        setNewServerUrlInput(defaultUrl);
+                      }} 
+                      style={[styles.submitNoticeBtn, { flex: 1, backgroundColor: '#475569' }]}
+                    >
+                      <Text style={styles.submitNoticeBtnText}>Reset Default</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity onPress={handleSaveServerUrl} style={[styles.submitNoticeBtn, { flex: 1 }]}>
+                      <Text style={styles.submitNoticeBtnText}>Save</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </Modal>
         </ScrollView>
       </SafeAreaView>
     );
