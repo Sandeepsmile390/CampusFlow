@@ -44,7 +44,9 @@ import {
   BookMarked,
   Award,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Bell,
+  BellOff
 } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
@@ -101,7 +103,7 @@ export default function MobileDashboard() {
   // Sector options inside tabs
   const [adminSector, setAdminSector] = useState<'STUDENTS' | 'TEACHERS' | 'COURSES' | 'SCHEDULES'>('STUDENTS');
   const [teacherSector, setTeacherSector] = useState<'REGISTER' | 'QR_GEN' | 'MARKS'>('REGISTER');
-  const [studentSector, setStudentSector] = useState<'LOGS' | 'PLACEMENTS'>('LOGS');
+  const [studentSector, setStudentSector] = useState<'LOGS' | 'PLACEMENTS' | 'FEES'>('LOGS');
   const [chatSector, setChatSector] = useState<'CHANNELS' | 'GEMINI'>('CHANNELS');
 
   // Shared Data States
@@ -111,6 +113,20 @@ export default function MobileDashboard() {
   const [fees, setFees] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
+
+  // Notifications States
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+  const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+
+  // Teacher Grade Ledger (Marks) States
+  const [gradesRoster, setGradesRoster] = useState<any[]>([]);
+  const [gradesRosterLoading, setGradesRosterLoading] = useState(false);
+
+  // Dashboard Analytics States
+  const [adminKpis, setAdminKpis] = useState<any>(null);
+  const [studentPerformance, setStudentPerformance] = useState<any>(null);
 
   // 1. Discussions & Chats States
   const [groups, setGroups] = useState<any[]>([]);
@@ -228,6 +244,7 @@ export default function MobileDashboard() {
   const [childAttendance, setChildAttendance] = useState<any[]>([]);
   const [childFees, setChildFees] = useState<any[]>([]);
   const [childSchedules, setChildSchedules] = useState<any[]>([]);
+  const [childPerformance, setChildPerformance] = useState<any>(null);
   const [childLoading, setChildLoading] = useState(false);
 
   // Global Notice Publisher Form Modal Toggle
@@ -236,6 +253,125 @@ export default function MobileDashboard() {
   const [postingAssignment, setPostingAssignment] = useState(false);
 
   // API Call Helpers
+  // Notifications helpers
+  const fetchNotifications = async (token = accessToken) => {
+    if (!token) return;
+    setNotificationsLoading(true);
+    try {
+      const res = await customFetch(`${API_URL}/notifications`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const json = await res.json();
+      if (json.success) {
+        setNotifications(json.data || []);
+        setUnreadNotificationsCount(json.unreadCount || 0);
+      }
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  };
+
+  const handleMarkNotificationRead = async (id: string) => {
+    try {
+      const res = await customFetch(`${API_URL}/notifications/${id}/read`, {
+        method: 'PATCH'
+      });
+      const json = await res.json();
+      if (json.success) {
+        fetchNotifications(accessToken);
+      }
+    } catch (err) {
+      console.error('Failed to mark notification read:', err);
+    }
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    try {
+      const res = await customFetch(`${API_URL}/notifications/read-all`, {
+        method: 'PATCH'
+      });
+      const json = await res.json();
+      if (json.success) {
+        Alert.alert('Success', 'All notifications marked as read.');
+        fetchNotifications(accessToken);
+      }
+    } catch (err) {
+      console.error('Failed to mark all notifications read:', err);
+    }
+  };
+
+  const handleDeleteNotification = async (id: string) => {
+    try {
+      const res = await customFetch(`${API_URL}/notifications/${id}`, {
+        method: 'DELETE'
+      });
+      const json = await res.json();
+      if (json.success) {
+        fetchNotifications(accessToken);
+      }
+    } catch (err) {
+      console.error('Failed to delete notification:', err);
+    }
+  };
+
+  // Teacher Grade Ledger Helper
+  const loadTeacherGradeLedger = async (courseId: string) => {
+    if (!courseId) return;
+    setGradesRosterLoading(true);
+    try {
+      const course = courses.find(c => c.id === courseId);
+      if (!course) return;
+
+      const res = await customFetch(`${API_URL}/students?departmentId=${course.departmentId}&semester=${course.semester}&limit=100`);
+      const json = await res.json();
+      if (json.success) {
+        const roster: any[] = [];
+        for (const s of json.data) {
+          try {
+            const perfRes = await customFetch(`${API_URL}/students/${s.id}/performance`);
+            const perfJson = await perfRes.json();
+            if (perfJson.success) {
+              roster.push({
+                id: s.id,
+                name: s.name,
+                rollNumber: s.rollNumber,
+                cgpa: perfJson.data.cgpa,
+                attendance: perfJson.data.attendancePercentage,
+                gradedCount: perfJson.data.gradedSubmissionsCount
+              });
+            }
+          } catch (err) {
+            console.error('Failed to resolve performance for student:', s.id, err);
+          }
+        }
+        setGradesRoster(roster);
+      }
+    } catch (err) {
+      console.error('Failed to load grade ledger:', err);
+      Alert.alert('Error', 'Failed to retrieve department grade roster.');
+    } finally {
+      setGradesRosterLoading(false);
+    }
+  };
+
+  // Admin Dashboard Analytics Helper
+  const fetchAdminDashboardAnalytics = async (token = accessToken) => {
+    if (!token) return;
+    try {
+      const res = await customFetch(`${API_URL}/analytics/dashboard/admin`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const json = await res.json();
+      if (json.success) {
+        setAdminKpis(json.data.kpis);
+      }
+    } catch (err) {
+      console.error('Failed to fetch admin dashboard analytics:', err);
+    }
+  };
+
   const fetchNotices = async (token = accessToken) => {
     setNoticesLoading(true);
     try {
@@ -960,6 +1096,10 @@ export default function MobileDashboard() {
       const schedJson = await schedRes.json();
       if (schedJson.success) setChildSchedules(schedJson.data);
 
+      const perfRes = await customFetch(`${API_URL}/students/${student.id}/performance`);
+      const perfJson = await perfRes.json();
+      if (perfJson.success) setChildPerformance(perfJson.data);
+
     } catch (err) {
       console.error('Child fetch error:', err);
     } finally {
@@ -1002,6 +1142,12 @@ export default function MobileDashboard() {
       });
       const schedJson = await schedRes.json();
       if (schedJson.success) setSchedules(schedJson.data);
+
+      const perfRes = await customFetch(`${API_URL}/students/${studentId}/performance`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      const perfJson = await perfRes.json();
+      if (perfJson.success) setStudentPerformance(perfJson.data);
     } catch (err) {
       console.error(err);
     }
@@ -1013,7 +1159,13 @@ export default function MobileDashboard() {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       const schedJson = await schedRes.json();
-      if (schedJson.success) setSchedules(schedJson.data);
+      if (schedJson.success) {
+        setSchedules(schedJson.data);
+        if (schedJson.data.length > 0) {
+          setActiveMarkCourseId(schedJson.data[0].courseId);
+          setActiveQrCourseId(schedJson.data[0].courseId);
+        }
+      }
     } catch (err) {
       console.error(err);
     }
@@ -1042,6 +1194,7 @@ export default function MobileDashboard() {
         fetchDiscussions(token);
         fetchDepartmentsList();
         fetchCoursesList();
+        fetchNotifications(token);
 
         if (loggedInUser.role === 'STUDENT') {
           fetchStudentDashboardData(loggedInUser.profile.id, token);
@@ -1051,6 +1204,7 @@ export default function MobileDashboard() {
           fetchTeacherDashboardData(loggedInUser.profile.id, token);
         } else if (loggedInUser.role === 'ADMIN') {
           fetchAdminManagementData('STUDENTS');
+          fetchAdminDashboardAnalytics(token);
         } else if (loggedInUser.role === 'PARENT') {
           if (loggedInUser.parentProfile?.students?.length > 0) {
             const firstChild = loggedInUser.parentProfile.students[0].id;
@@ -1077,6 +1231,11 @@ export default function MobileDashboard() {
     setAssignments([]);
     setGroups([]);
     setActiveGroup(null);
+    setNotifications([]);
+    setUnreadNotificationsCount(0);
+    setGradesRoster([]);
+    setAdminKpis(null);
+    setStudentPerformance(null);
     setActiveTab('DASHBOARD');
   };
 
@@ -1260,9 +1419,27 @@ export default function MobileDashboard() {
               </View>
             </View>
           </View>
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-            <LogOut size={18} color="#F43F5E" />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+            <TouchableOpacity
+              onPress={() => {
+                fetchNotifications(accessToken);
+                setNotificationsModalVisible(true);
+              }}
+              style={styles.notificationButton}
+            >
+              <Bell size={18} color="#14B8A6" />
+              {unreadNotificationsCount > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>
+                    {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+              <LogOut size={18} color="#F43F5E" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -1328,6 +1505,25 @@ export default function MobileDashboard() {
           {/* 2. STATS GRID */}
           {user.role === 'STUDENT' && (
             <View style={styles.statsCardGrid}>
+              {parseFloat(studentPerformance?.attendancePercentage || '100') < 75 && (
+                <View style={{
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  borderColor: 'rgba(239, 68, 68, 0.2)',
+                  borderWidth: 1,
+                  borderRadius: 16,
+                  padding: 14,
+                  marginBottom: 6,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8
+                }}>
+                  <AlertCircle size={16} color="#EF4444" />
+                  <Text style={{ color: '#EF4444', fontSize: 11, fontWeight: 'bold', flex: 1 }}>
+                    Debarred Warning: Your attendance ({studentPerformance?.attendancePercentage}%) is below the university-mandated 75% threshold.
+                  </Text>
+                </View>
+              )}
+
               <View style={styles.statDoubleCard}>
                 <View style={styles.statItemCard}>
                   <View style={styles.statHeaderRow}>
@@ -1336,22 +1532,37 @@ export default function MobileDashboard() {
                       <Award size={16} color="#6366F1" />
                     </View>
                   </View>
-                  <Text style={styles.statCardValue}>9.50 / 10.0</Text>
-                  <Text style={styles.statCardSubtitle}>Excellent Standing</Text>
+                  <Text style={styles.statCardValue}>
+                    {studentPerformance ? `${studentPerformance.cgpa} / 10.0` : '8.50 / 10.0'}
+                  </Text>
+                  <Text style={styles.statCardSubtitle}>
+                    {studentPerformance && parseFloat(studentPerformance.cgpa) >= 8.5 ? 'Excellent Standing' : 'Good Standing'}
+                  </Text>
                 </View>
                 <View style={styles.statItemCard}>
                   <View style={styles.statHeaderRow}>
                     <Text style={styles.statCardTitle}>TOTAL ATTENDANCE</Text>
-                    <View style={[styles.statIconCircle, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
-                      <CheckCircle size={16} color="#10B981" />
+                    <View style={[
+                      styles.statIconCircle,
+                      parseFloat(studentPerformance?.attendancePercentage || '100') < 75
+                        ? { backgroundColor: 'rgba(239, 68, 68, 0.1)' }
+                        : { backgroundColor: 'rgba(16, 185, 129, 0.1)' }
+                    ]}>
+                      <CheckCircle
+                        size={16}
+                        color={parseFloat(studentPerformance?.attendancePercentage || '100') < 75 ? '#EF4444' : '#10B981'}
+                      />
                     </View>
                   </View>
-                  <Text style={styles.statCardValue}>
-                    {attendanceLogs.length > 0
-                      ? `${((attendanceLogs.filter(a => a.status === 'PRESENT').length / attendanceLogs.length) * 100).toFixed(1)}%`
-                      : '85.7%'}
+                  <Text style={[
+                    styles.statCardValue,
+                    parseFloat(studentPerformance?.attendancePercentage || '100') < 75 && { color: '#EF4444' }
+                  ]}>
+                    {studentPerformance ? `${studentPerformance.attendancePercentage}%` : '100.0%'}
                   </Text>
-                  <Text style={styles.statCardSubtitle}>Compliant</Text>
+                  <Text style={styles.statCardSubtitle}>
+                    {parseFloat(studentPerformance?.attendancePercentage || '100') < 75 ? 'Action Required' : 'Compliant'}
+                  </Text>
                 </View>
               </View>
 
@@ -1364,7 +1575,7 @@ export default function MobileDashboard() {
                     </View>
                   </View>
                   <Text style={styles.statCardValue}>
-                    {assignments.filter(asg => !asg.submissions || asg.submissions.length === 0).length || '1'}
+                    {assignments.filter(asg => !asg.submissions || asg.submissions.length === 0).length || '0'}
                   </Text>
                   <Text style={styles.statCardSubtitle}>Due shortly</Text>
                 </View>
@@ -1437,21 +1648,57 @@ export default function MobileDashboard() {
           )}
 
           {user.role === 'ADMIN' && (
-            <View style={styles.adminStatsRow}>
-              <View style={styles.statMiniCard}>
-                <Users size={20} color="#14B8A6" />
-                <Text style={styles.statMiniVal}>{adminStudents.length || '120'}</Text>
-                <Text style={styles.statMiniLabel}>Students</Text>
+            <View style={{ gap: 12, marginBottom: 20 }}>
+              <View style={styles.statDoubleCard}>
+                <View style={styles.statItemCard}>
+                  <View style={styles.statHeaderRow}>
+                    <Text style={styles.statCardTitle}>TOTAL STUDENTS</Text>
+                    <View style={[styles.statIconCircle, { backgroundColor: 'rgba(20, 184, 166, 0.1)' }]}>
+                      <Users size={16} color="#14B8A6" />
+                    </View>
+                  </View>
+                  <Text style={styles.statCardValue}>{adminKpis?.totalStudents ?? adminStudents.length ?? '0'}</Text>
+                  <Text style={styles.statCardSubtitle}>Registered Students</Text>
+                </View>
+                <View style={styles.statItemCard}>
+                  <View style={styles.statHeaderRow}>
+                    <Text style={styles.statCardTitle}>TOTAL TEACHERS</Text>
+                    <View style={[styles.statIconCircle, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
+                      <GraduationCap size={16} color="#6366F1" />
+                    </View>
+                  </View>
+                  <Text style={styles.statCardValue}>{adminKpis?.totalTeachers ?? adminTeachers.length ?? '0'}</Text>
+                  <Text style={styles.statCardSubtitle}>Faculty Members</Text>
+                </View>
               </View>
-              <View style={styles.statMiniCard}>
-                <GraduationCap size={20} color="#4338CA" />
-                <Text style={styles.statMiniVal}>{adminTeachers.length || '15'}</Text>
-                <Text style={styles.statMiniLabel}>Teachers</Text>
-              </View>
-              <View style={styles.statMiniCard}>
-                <BookMarked size={20} color="#38BDF8" />
-                <Text style={styles.statMiniVal}>{adminCourses.length || '8'}</Text>
-                <Text style={styles.statMiniLabel}>Courses</Text>
+
+              <View style={styles.statDoubleCard}>
+                <View style={styles.statItemCard}>
+                  <View style={styles.statHeaderRow}>
+                    <Text style={styles.statCardTitle}>AVG ATTENDANCE</Text>
+                    <View style={[styles.statIconCircle, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+                      <ClipboardCheck size={16} color="#10B981" />
+                    </View>
+                  </View>
+                  <Text style={styles.statCardValue}>
+                    {adminKpis ? `${adminKpis.attendanceRate}%` : '85.7%'}
+                  </Text>
+                  <Text style={styles.statCardSubtitle}>Attendance Rate</Text>
+                </View>
+                <View style={styles.statItemCard}>
+                  <View style={styles.statHeaderRow}>
+                    <Text style={styles.statCardTitle}>FEES COLLECTED</Text>
+                    <View style={[styles.statIconCircle, { backgroundColor: 'rgba(20, 184, 166, 0.1)' }]}>
+                      <IndianRupee size={16} color="#14B8A6" />
+                    </View>
+                  </View>
+                  <Text style={styles.statCardValue}>
+                    ₹{adminKpis ? adminKpis.totalCollected.toLocaleString('en-IN') : '0'}
+                  </Text>
+                  <Text style={styles.statCardSubtitle}>
+                    ₹{adminKpis ? adminKpis.totalPending.toLocaleString('en-IN') : '0'} Outstanding
+                  </Text>
+                </View>
               </View>
             </View>
           )}
@@ -1471,18 +1718,34 @@ export default function MobileDashboard() {
 
                 {/* Bars Area */}
                 <View style={styles.chartBarsArea}>
-                  <View style={styles.chartBarCol}>
-                    <View style={styles.chartBarTrack}>
-                      <View style={[styles.chartBarFill, { height: '90%' }]} />
-                    </View>
-                    <Text style={styles.chartBarLabel}>CSE-302</Text>
-                  </View>
-                  <View style={styles.chartBarCol}>
-                    <View style={styles.chartBarTrack}>
-                      <View style={[styles.chartBarFill, { height: '100%' }]} />
-                    </View>
-                    <Text style={styles.chartBarLabel}>CSE-301</Text>
-                  </View>
+                  {studentPerformance?.subjectWisePerformance && studentPerformance.subjectWisePerformance.length > 0 ? (
+                    studentPerformance.subjectWisePerformance.map((subj: any, index: number) => {
+                      const percentage = Math.min(100, Math.max(0, (parseFloat(subj.gpa) / 10) * 100));
+                      return (
+                        <View key={index} style={styles.chartBarCol}>
+                          <View style={styles.chartBarTrack}>
+                            <View style={[styles.chartBarFill, { height: `${percentage}%` }]} />
+                          </View>
+                          <Text style={styles.chartBarLabel} numberOfLines={1}>{subj.code}</Text>
+                        </View>
+                      );
+                    })
+                  ) : (
+                    <>
+                      <View style={styles.chartBarCol}>
+                        <View style={styles.chartBarTrack}>
+                          <View style={[styles.chartBarFill, { height: '90%' }]} />
+                        </View>
+                        <Text style={styles.chartBarLabel}>CSE-302</Text>
+                      </View>
+                      <View style={styles.chartBarCol}>
+                        <View style={styles.chartBarTrack}>
+                          <View style={[styles.chartBarFill, { height: '100%' }]} />
+                        </View>
+                        <Text style={styles.chartBarLabel}>CSE-301</Text>
+                      </View>
+                    </>
+                  )}
                 </View>
               </View>
             </View>
@@ -1722,14 +1985,19 @@ export default function MobileDashboard() {
           {user.role === 'TEACHER' && (
             <View style={{ flex: 1 }}>
               <View style={styles.subSegmentContainer}>
-                {['REGISTER', 'QR_GEN'].map((sec) => (
+                {['REGISTER', 'QR_GEN', 'MARKS'].map((sec) => (
                   <TouchableOpacity
                     key={sec}
-                    onPress={() => setTeacherSector(sec as any)}
+                    onPress={() => {
+                      setTeacherSector(sec as any);
+                      if (sec === 'MARKS' && activeMarkCourseId) {
+                        loadTeacherGradeLedger(activeMarkCourseId);
+                      }
+                    }}
                     style={[styles.subSegmentBtn, teacherSector === sec && styles.subSegmentBtnActive]}
                   >
                     <Text style={[styles.subSegmentText, teacherSector === sec && styles.subSegmentTextActive]}>
-                      {sec === 'REGISTER' ? 'Register Check' : 'QR Broadcast'}
+                      {sec === 'REGISTER' ? 'Register' : sec === 'QR_GEN' ? 'QR Code' : 'Grade Ledger'}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -1840,6 +2108,68 @@ export default function MobileDashboard() {
                     ) : null}
                   </View>
                 )}
+
+                {teacherSector === 'MARKS' && (
+                  <View style={{ gap: 12 }}>
+                    <Text style={styles.inputLabel}>Select Course for Grade Ledger</Text>
+                    <View style={styles.pickerSim}>
+                      {schedules.map((sched) => (
+                        <TouchableOpacity
+                          key={sched.courseId}
+                          style={[styles.pickerOption, activeMarkCourseId === sched.courseId && styles.pickerOptionActive]}
+                          onPress={() => {
+                            setActiveMarkCourseId(sched.courseId);
+                            loadTeacherGradeLedger(sched.courseId);
+                          }}
+                        >
+                          <Text style={[styles.pickerOptionText, activeMarkCourseId === sched.courseId && styles.pickerOptionTextActive]}>
+                            {sched.course?.code}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+
+                    {gradesRosterLoading ? (
+                      <ActivityIndicator color="#14B8A6" style={{ marginTop: 20 }} />
+                    ) : gradesRoster.length > 0 ? (
+                      <View style={{ marginTop: 12, gap: 10 }}>
+                        <Text style={styles.sectionTitle}>Roster Progression & Grades</Text>
+                        {gradesRoster.map((stud) => {
+                          const debarred = parseFloat(stud.attendance) < 75;
+                          const excellent = parseFloat(stud.cgpa) >= 8.5;
+                          return (
+                            <View key={stud.id} style={styles.scheduleItem}>
+                              <View style={{ flex: 1 }}>
+                                <Text style={styles.scheduleCourseName}>{stud.name}</Text>
+                                <Text style={styles.scheduleFaculty}>Roll: {stud.rollNumber}</Text>
+                                <Text style={styles.noticeDate}>
+                                  Attendance: <Text style={debarred ? { color: '#F43F5E', fontWeight: 'bold' } : { color: '#CBD5E1' }}>{stud.attendance}%</Text> | Graded Tasks: {stud.gradedCount}
+                                </Text>
+                                <Text style={[styles.scheduleCourseName, { marginTop: 6, fontSize: 12, color: '#38BDF8' }]}>
+                                  Semester CGPA: {stud.cgpa} / 10.0
+                                </Text>
+                              </View>
+                              <View style={[
+                                styles.categoryBadge,
+                                excellent ? styles.excellentBadge : debarred ? styles.warningBadge : styles.satisfactoryBadge,
+                                { borderWidth: 1 }
+                              ]}>
+                                <Text style={[
+                                  styles.categoryText,
+                                  excellent ? { color: '#14B8A6' } : debarred ? { color: '#EF4444' } : { color: '#10B981' }
+                                ]}>
+                                  {excellent ? 'Outstanding' : debarred ? 'Debarred' : 'Satisfactory'}
+                                </Text>
+                              </View>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    ) : (
+                      <Text style={styles.emptyText}>Select a class schedule course to load grade roster ledger.</Text>
+                    )}
+                  </View>
+                )}
               </ScrollView>
             </View>
           )}
@@ -1848,14 +2178,14 @@ export default function MobileDashboard() {
           {user.role === 'STUDENT' && (
             <View style={{ flex: 1 }}>
               <View style={styles.subSegmentContainer}>
-                {['LOGS', 'PLACEMENTS'].map((sec) => (
+                {['LOGS', 'PLACEMENTS', 'FEES'].map((sec) => (
                   <TouchableOpacity
                     key={sec}
                     onPress={() => setStudentSector(sec as any)}
                     style={[styles.subSegmentBtn, studentSector === sec && styles.subSegmentBtnActive]}
                   >
                     <Text style={[styles.subSegmentText, studentSector === sec && styles.subSegmentTextActive]}>
-                      {sec === 'LOGS' ? 'Attendance Logs' : 'Corporate Placements'}
+                      {sec === 'LOGS' ? 'Attendance' : sec === 'PLACEMENTS' ? 'Placements' : 'Tuition Invoices'}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -1953,6 +2283,42 @@ export default function MobileDashboard() {
                     )}
                   </View>
                 )}
+
+                {studentSector === 'FEES' && (
+                  <View style={{ gap: 14 }}>
+                    <Text style={styles.sectionTitle}>Tuition & Fee Invoices</Text>
+                    {fees.length > 0 ? (
+                      fees.map((inv) => (
+                        <View key={inv.id} style={styles.scheduleItem}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.scheduleCourseName}>Academic Tuition Invoice</Text>
+                            <Text style={styles.scheduleFaculty}>Amount: ₹{inv.amount.toLocaleString('en-IN')}</Text>
+                            <Text style={styles.noticeDate}>Due Date: {new Date(inv.dueDate).toLocaleDateString()}</Text>
+                            {inv.transactionId ? (
+                              <Text style={[styles.noticeDate, { color: '#64748B', fontFamily: 'monospace', marginTop: 4 }]}>
+                                Transaction ID: {inv.transactionId}
+                              </Text>
+                            ) : null}
+                          </View>
+                          {inv.status === 'PENDING' ? (
+                            <TouchableOpacity
+                              onPress={() => handlePayFee(inv.id, user.profile.id)}
+                              style={styles.gradeRosterBtn}
+                            >
+                              <Text style={styles.gradeRosterBtnText}>Pay Now</Text>
+                            </TouchableOpacity>
+                          ) : (
+                            <View style={[styles.categoryBadge, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+                              <Text style={[styles.categoryText, { color: '#10B981' }]}>PAID</Text>
+                            </View>
+                          )}
+                        </View>
+                      ))
+                    ) : (
+                      <Text style={styles.emptyText}>No invoices recorded.</Text>
+                    )}
+                  </View>
+                )}
               </ScrollView>
             </View>
           )}
@@ -1982,20 +2348,61 @@ export default function MobileDashboard() {
                 <ActivityIndicator color="#14B8A6" style={{ marginTop: 24 }} />
               ) : (
                 <View style={{ gap: 20, marginTop: 16 }}>
-                  {/* Child attendance summary */}
-                  <View style={styles.attendanceSummaryBox}>
-                    <View style={{ alignItems: 'center' }}>
-                      <Text style={styles.attSummaryVal}>
-                        {childAttendance.length > 0
-                          ? Math.round((childAttendance.filter(a => a.status === 'PRESENT').length / childAttendance.length) * 100)
-                          : 0}%
+                  {parseFloat(childPerformance?.attendancePercentage || '100') < 75 && (
+                    <View style={{
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      borderColor: 'rgba(239, 68, 68, 0.2)',
+                      borderWidth: 1,
+                      borderRadius: 16,
+                      padding: 14,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 8
+                    }}>
+                      <AlertCircle size={16} color="#EF4444" />
+                      <Text style={{ color: '#EF4444', fontSize: 11, fontWeight: 'bold', flex: 1 }}>
+                        Debarred Warning: Your child's attendance ({childPerformance?.attendancePercentage}%) is below the university-mandated 75% threshold.
                       </Text>
-                      <Text style={styles.attSummaryLabel}>Child Attendance</Text>
                     </View>
-                    <View style={styles.attSummaryStats}>
-                      <Text style={styles.attSummaryStatText}>Verified Slots: {childAttendance.length}</Text>
-                      <Text style={[styles.attSummaryStatText, { color: '#10B981' }]}>Present: {childAttendance.filter(a => a.status === 'PRESENT').length}</Text>
-                      <Text style={[styles.attSummaryStatText, { color: '#EF4444' }]}>Absent: {childAttendance.filter(a => a.status === 'ABSENT').length}</Text>
+                  )}
+
+                  <View style={styles.statDoubleCard}>
+                    <View style={styles.statItemCard}>
+                      <View style={styles.statHeaderRow}>
+                        <Text style={styles.statCardTitle}>CUMULATIVE CGPA</Text>
+                        <View style={[styles.statIconCircle, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
+                          <Award size={16} color="#6366F1" />
+                        </View>
+                      </View>
+                      <Text style={styles.statCardValue}>
+                        {childPerformance ? `${childPerformance.cgpa} / 10.0` : '8.50 / 10.0'}
+                      </Text>
+                      <Text style={styles.statCardSubtitle}>Academic Progression</Text>
+                    </View>
+                    <View style={styles.statItemCard}>
+                      <View style={styles.statHeaderRow}>
+                        <Text style={styles.statCardTitle}>CHILD ATTENDANCE</Text>
+                        <View style={[
+                          styles.statIconCircle,
+                          parseFloat(childPerformance?.attendancePercentage || '100') < 75
+                            ? { backgroundColor: 'rgba(239, 68, 68, 0.1)' }
+                            : { backgroundColor: 'rgba(16, 185, 129, 0.1)' }
+                        ]}>
+                          <CheckCircle
+                            size={16}
+                            color={parseFloat(childPerformance?.attendancePercentage || '100') < 75 ? '#EF4444' : '#10B981'}
+                          />
+                        </View>
+                      </View>
+                      <Text style={[
+                        styles.statCardValue,
+                        parseFloat(childPerformance?.attendancePercentage || '100') < 75 && { color: '#EF4444' }
+                      ]}>
+                        {childPerformance ? `${childPerformance.attendancePercentage}%` : '100.0%'}
+                      </Text>
+                      <Text style={styles.statCardSubtitle}>
+                        {parseFloat(childPerformance?.attendancePercentage || '100') < 75 ? 'Action Required' : 'Compliant'}
+                      </Text>
                     </View>
                   </View>
 
@@ -2047,6 +2454,28 @@ export default function MobileDashboard() {
                       <Text style={styles.emptyText}>No active courses mapped.</Text>
                     )}
                   </View>
+
+                  {/* Curriculum grades breakdown */}
+                  <Text style={styles.sectionTitle}>Curriculum Grades Breakdown</Text>
+                  {childPerformance?.subjectWisePerformance?.length > 0 ? (
+                    <View style={{ gap: 10 }}>
+                      {childPerformance.subjectWisePerformance.map((subj: any, i: number) => (
+                        <View key={i} style={styles.scheduleItem}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.scheduleCourseName}>{subj.name}</Text>
+                            <Text style={styles.scheduleFaculty}>{subj.code}</Text>
+                          </View>
+                          <View style={[styles.categoryBadge, styles.excellentBadge]}>
+                            <Text style={[styles.categoryText, { color: '#14B8A6' }]}>
+                              {subj.gpa} / 10.0
+                            </Text>
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+                  ) : (
+                    <Text style={styles.emptyText}>No grading scores resolved yet.</Text>
+                  )}
                 </View>
               )}
             </ScrollView>
@@ -2807,6 +3236,100 @@ export default function MobileDashboard() {
                 {submittingPlacementApp ? <ActivityIndicator color="#FFF" /> : <Text style={styles.submitNoticeBtnText}>Submit Resume</Text>}
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* NOTIFICATIONS CENTER MODAL */}
+      <Modal visible={notificationsModalVisible} transparent animationType="slide">
+        <View style={styles.modalBg}>
+          <View style={[styles.modalContent, { maxHeight: '80%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Notifications Center</Text>
+              <TouchableOpacity onPress={() => setNotificationsModalVisible(false)} style={styles.closeButton}>
+                <X size={20} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.notifCenterHeader}>
+              <Text style={styles.inputLabel}>
+                {unreadNotificationsCount} UNREAD NOTIFICATIONS
+              </Text>
+              {unreadNotificationsCount > 0 && (
+                <TouchableOpacity onPress={handleMarkAllNotificationsRead}>
+                  <Text style={styles.notifMarkAllText}>Mark all as read</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {notificationsLoading ? (
+              <ActivityIndicator color="#14B8A6" style={{ marginVertical: 30 }} />
+            ) : notifications.length > 0 ? (
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+                {notifications.map((notif) => {
+                  let typeColor = '#4338CA';
+                  let typeBg = 'rgba(67, 56, 202, 0.1)';
+                  if (notif.type === 'ASSIGNMENT') {
+                    typeColor = '#38BDF8';
+                    typeBg = 'rgba(56, 189, 248, 0.1)';
+                  } else if (notif.type === 'ATTENDANCE') {
+                    typeColor = '#10B981';
+                    typeBg = 'rgba(16, 185, 129, 0.1)';
+                  } else if (notif.type === 'FEE') {
+                    typeColor = '#F59E0B';
+                    typeBg = 'rgba(245, 158, 11, 0.1)';
+                  } else if (notif.type === 'NOTICE') {
+                    typeColor = '#EF4444';
+                    typeBg = 'rgba(239, 68, 68, 0.1)';
+                  }
+
+                  return (
+                    <TouchableOpacity
+                      key={notif.id}
+                      onPress={() => {
+                        if (!notif.isRead) {
+                          handleMarkNotificationRead(notif.id);
+                        }
+                      }}
+                      style={[
+                        styles.notifCard,
+                        notif.isRead && styles.notifCardRead,
+                        { borderColor: typeBg }
+                      ]}
+                    >
+                      <View style={styles.notifHeader}>
+                        <View style={[styles.categoryBadge, { backgroundColor: typeBg }]}>
+                          <Text style={[styles.categoryText, { color: typeColor }]}>
+                            {notif.type}
+                          </Text>
+                        </View>
+                        {!notif.isRead && (
+                          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444' }} />
+                        )}
+                      </View>
+                      <Text style={styles.notifTitle}>{notif.title}</Text>
+                      <Text style={styles.notifBody}>{notif.message}</Text>
+                      <View style={styles.notifFooter}>
+                        <Text style={styles.notifDate}>
+                          {new Date(notif.createdAt).toLocaleString()}
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => handleDeleteNotification(notif.id)}
+                          style={styles.notifDeleteBtn}
+                        >
+                          <Trash2 size={12} color="#F43F5E" />
+                        </TouchableOpacity>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            ) : (
+              <View style={styles.notifEmptyCenter}>
+                <BellOff size={40} color="#64748B" />
+                <Text style={styles.notifEmptyText}>All caught up! No notifications.</Text>
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -3968,5 +4491,102 @@ const styles = StyleSheet.create({
   tableBodyCell: {
     color: '#CBD5E1',
     fontSize: 9,
+  },
+  notificationButton: {
+    padding: 8,
+    backgroundColor: 'rgba(20, 184, 166, 0.08)',
+    borderRadius: 12,
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#EF4444',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  notificationBadgeText: {
+    color: '#FFF',
+    fontSize: 8,
+    fontWeight: 'bold',
+  },
+  notifCenterHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  notifMarkAllText: {
+    color: '#14B8A6',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  notifCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 10,
+  },
+  notifCardRead: {
+    opacity: 0.6,
+  },
+  notifHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  notifTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginTop: 4,
+  },
+  notifBody: {
+    fontSize: 11,
+    color: '#94A3B8',
+    marginTop: 4,
+    lineHeight: 15,
+  },
+  notifFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  notifDate: {
+    fontSize: 8,
+    color: '#64748B',
+  },
+  notifDeleteBtn: {
+    padding: 4,
+  },
+  notifEmptyCenter: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    gap: 10,
+  },
+  notifEmptyText: {
+    color: '#64748B',
+    fontSize: 12,
+    fontStyle: 'italic',
+  },
+  excellentBadge: {
+    backgroundColor: 'rgba(20, 184, 166, 0.1)',
+    borderColor: 'rgba(20, 184, 166, 0.2)',
+  },
+  satisfactoryBadge: {
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderColor: 'rgba(16, 185, 129, 0.2)',
+  },
+  warningBadge: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderColor: 'rgba(239, 68, 68, 0.2)',
   }
 });
