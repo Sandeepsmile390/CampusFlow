@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Svg, { Path, Defs, LinearGradient, Stop, Circle, Text as SvgText } from 'react-native-svg';
 import Constants from 'expo-constants';
 import {
   StyleSheet,
@@ -83,6 +84,10 @@ export default function MobileDashboard() {
   const [serverUrl, setServerUrl] = useState(API_URL);
   const [showServerConfig, setShowServerConfig] = useState(false);
   const [newServerUrlInput, setNewServerUrlInput] = useState(API_URL);
+
+  // Focus states for input styling
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
   const handleSaveServerUrl = () => {
     if (!newServerUrlInput.trim()) {
@@ -1284,12 +1289,84 @@ export default function MobileDashboard() {
     return (
       <SafeAreaView style={styles.loginContainer}>
         <StatusBar barStyle="light-content" />
+        {/* Glow ambient background accents */}
+        <View style={styles.glowTopRight} />
+        <View style={styles.glowBottomLeft} />
+
         <ScrollView contentContainerStyle={styles.loginScroll}>
           <View style={styles.loginHeader}>
-            <View style={styles.logoBadge}>
-              <Sparkles size={32} color="#14B8A6" />
+            <View style={styles.logoIconContainer}>
+              <Svg
+                width={64}
+                height={64}
+                viewBox="0 0 100 100"
+              >
+                <Defs>
+                  <LinearGradient id="logo-grad-mobile" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <Stop offset="0%" stopColor="#4338CA" />
+                    <Stop offset="50%" stopColor="#14B8A6" />
+                    <Stop offset="100%" stopColor="#38BDF8" />
+                  </LinearGradient>
+                </Defs>
+                
+                {/* Cap Top Diamond */}
+                <Path
+                  fill="url(#logo-grad-mobile)"
+                  d="M50 10 L85 28 L50 46 L15 28 Z"
+                />
+                {/* Cap Bottom Wall */}
+                <Path
+                  fill="url(#logo-grad-mobile)"
+                  d="M32 36.5 L32 46 C32 53 68 53 68 46 L68 36.5"
+                  opacity="0.85"
+                />
+                {/* Cap Tassel */}
+                <Path
+                  stroke="url(#logo-grad-mobile)"
+                  strokeWidth="3"
+                  fill="none"
+                  d="M48 28.5 L24 38 L24 50"
+                />
+                <Circle cx="24" cy="52" r="4" fill="url(#logo-grad-mobile)" />
+
+                {/* Monogram Flowing Curves ("CF") */}
+                <Path
+                  stroke="url(#logo-grad-mobile)"
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  fill="none"
+                  d="M25 75 C 28 62, 45 60, 55 70 C 65 80, 80 75, 88 65"
+                />
+                <Path
+                  stroke="url(#logo-grad-mobile)"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  fill="none"
+                  d="M52 66 L78 66"
+                />
+              </Svg>
             </View>
-            <Text style={styles.appName}>CampusFlow</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
+              <Text style={{ fontSize: 28, fontWeight: '800', color: '#FFF' }}>Campus</Text>
+              <Svg width={70} height={36} viewBox="0 0 70 36">
+                <Defs>
+                  <LinearGradient id="text-grad-mobile" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <Stop offset="0%" stopColor="#4338CA" />
+                    <Stop offset="50%" stopColor="#14B8A6" />
+                    <Stop offset="100%" stopColor="#38BDF8" />
+                  </LinearGradient>
+                </Defs>
+                <SvgText
+                  fill="url(#text-grad-mobile)"
+                  fontSize="28"
+                  fontWeight="bold"
+                  x="0"
+                  y="28"
+                >
+                  Flow
+                </SvgText>
+              </Svg>
+            </View>
             <Text style={styles.appSubtitle}>Secure Mobile Client Portal</Text>
           </View>
 
@@ -1297,54 +1374,46 @@ export default function MobileDashboard() {
             <Text style={styles.formTitle}>Sign In to portal</Text>
             <Text style={styles.formSubtitle}>Enter your credentials to enter ERP system</Text>
 
-            {/* Access Role Dropdown */}
+            {/* Access Role Segment Control */}
             <View style={styles.inputWrapper}>
               <Text style={styles.inputLabel}>ACCESS ROLE</Text>
-              <TouchableOpacity
-                onPress={() => setShowRoleDropdown(!showRoleDropdown)}
-                style={styles.dropdownTrigger}
-              >
-                <Text style={styles.dropdownTriggerText}>
-                  {selectedRole === 'STUDENT' ? 'Student' : selectedRole === 'TEACHER' ? 'Teacher' : selectedRole === 'ADMIN' ? 'Admin' : 'Parent'}
-                </Text>
-                {showRoleDropdown ? <ChevronUp size={18} color="#94A3B8" /> : <ChevronDown size={18} color="#94A3B8" />}
-              </TouchableOpacity>
-              {showRoleDropdown && (
-                <View style={styles.dropdownMenu}>
-                  {(['STUDENT', 'TEACHER', 'ADMIN', 'PARENT'] as const).map((r) => (
+              <View style={styles.roleSegmentsContainer}>
+                {(['STUDENT', 'TEACHER', 'ADMIN', 'PARENT'] as const).map((r) => {
+                  const isActive = selectedRole === r;
+                  return (
                     <TouchableOpacity
                       key={r}
-                      onPress={() => {
-                        setSelectedRole(r);
-                        setShowRoleDropdown(false);
-                      }}
+                      onPress={() => setSelectedRole(r)}
                       style={[
-                        styles.dropdownItem,
-                        selectedRole === r && styles.dropdownItemActive
+                        styles.roleSegmentChip,
+                        isActive && styles.roleSegmentChipActive
                       ]}
                     >
-                      <Text
-                        style={[
-                          styles.dropdownItemText,
-                          selectedRole === r && styles.dropdownItemTextActive
-                        ]}
-                      >
+                      <Text style={[
+                        styles.roleSegmentText,
+                        isActive && styles.roleSegmentTextActive
+                      ]}>
                         {r === 'STUDENT' ? 'Student' : r === 'TEACHER' ? 'Teacher' : r === 'ADMIN' ? 'Admin' : 'Parent'}
                       </Text>
                     </TouchableOpacity>
-                  ))}
-                </View>
-              )}
+                  );
+                })}
+              </View>
             </View>
 
             {/* Email Address */}
             <View style={styles.inputWrapper}>
               <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
-              <View style={styles.inputFieldContainer}>
-                <Mail size={18} color="#94A3B8" />
+              <View style={[
+                styles.inputFieldContainer,
+                emailFocused && styles.inputFieldContainerActive
+              ]}>
+                <Mail size={18} color={emailFocused ? "#14B8A6" : "#94A3B8"} />
                 <TextInput
                   value={email}
                   onChangeText={setEmail}
+                  onFocus={() => setEmailFocused(true)}
+                  onBlur={() => setEmailFocused(false)}
                   style={[styles.textInput, { marginLeft: 10 }]}
                   placeholder="name@university.edu"
                   placeholderTextColor="#64748B"
@@ -1362,11 +1431,16 @@ export default function MobileDashboard() {
                   <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                 </TouchableOpacity>
               </View>
-              <View style={styles.inputFieldContainer}>
-                <Lock size={18} color="#94A3B8" />
+              <View style={[
+                styles.inputFieldContainer,
+                passwordFocused && styles.inputFieldContainerActive
+              ]}>
+                <Lock size={18} color={passwordFocused ? "#14B8A6" : "#94A3B8"} />
                 <TextInput
                   value={password}
                   onChangeText={setPassword}
+                  onFocus={() => setPasswordFocused(true)}
+                  onBlur={() => setPasswordFocused(false)}
                   style={[styles.textInput, { marginLeft: 10 }]}
                   placeholder="••••••••"
                   placeholderTextColor="#64748B"
@@ -1423,6 +1497,7 @@ export default function MobileDashboard() {
               <Text style={styles.mockButtonText}>Parent</Text>
             </TouchableOpacity>
           </View>
+          
           <TouchableOpacity 
             style={styles.apiLabelContainer} 
             onPress={() => {
@@ -3621,23 +3696,31 @@ const styles = StyleSheet.create({
   },
   tabsContainer: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.04)',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+    borderRadius: 16,
+    marginHorizontal: 16,
+    marginVertical: 12,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
   },
   tabButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 8,
+    gap: 6,
+    paddingVertical: 10,
     borderRadius: 12,
   },
   tabButtonActive: {
-    backgroundColor: 'rgba(20, 184, 166, 0.1)',
+    backgroundColor: 'rgba(20, 184, 166, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(20, 184, 166, 0.25)',
   },
   tabButtonText: {
     fontSize: 11,
@@ -4674,5 +4757,70 @@ const styles = StyleSheet.create({
   warningBadge: {
     backgroundColor: 'rgba(239, 68, 68, 0.1)',
     borderColor: 'rgba(239, 68, 68, 0.2)',
+  },
+  glowTopRight: {
+    position: 'absolute',
+    top: -100,
+    right: -100,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: '#14B8A6',
+    opacity: 0.08,
+  },
+  glowBottomLeft: {
+    position: 'absolute',
+    bottom: -150,
+    left: -150,
+    width: 350,
+    height: 350,
+    borderRadius: 175,
+    backgroundColor: '#4338CA',
+    opacity: 0.1,
+  },
+  roleSegmentsContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    borderRadius: 12,
+    padding: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    marginTop: 4,
+    width: '100%',
+  },
+  roleSegmentChip: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 9,
+  },
+  roleSegmentChipActive: {
+    backgroundColor: 'rgba(20, 184, 166, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(20, 184, 166, 0.3)',
+  },
+  roleSegmentText: {
+    color: '#94A3B8',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  roleSegmentTextActive: {
+    color: '#14B8A6',
+    fontWeight: 'bold',
+  },
+  inputFieldContainerActive: {
+    borderColor: '#14B8A6',
+    shadowColor: '#14B8A6',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  logoIconContainer: {
+    width: 64,
+    height: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
   }
 });
