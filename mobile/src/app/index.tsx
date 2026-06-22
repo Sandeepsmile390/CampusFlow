@@ -1380,6 +1380,18 @@ export default function MobileDashboard() {
               <View style={styles.roleSegmentsContainer}>
                 {(['STUDENT', 'TEACHER', 'ADMIN', 'PARENT'] as const).map((r) => {
                   const isActive = selectedRole === r;
+                  
+                  // Resolve role icon
+                  let IconComponent = GraduationCap;
+                  let iconColor = isActive ? '#14B8A6' : '#64748B';
+                  if (r === 'TEACHER') {
+                    IconComponent = BookOpen;
+                  } else if (r === 'ADMIN') {
+                    IconComponent = UserCheck;
+                  } else if (r === 'PARENT') {
+                    IconComponent = Users;
+                  }
+
                   return (
                     <TouchableOpacity
                       key={r}
@@ -1389,6 +1401,7 @@ export default function MobileDashboard() {
                         isActive && styles.roleSegmentChipActive
                       ]}
                     >
+                      <IconComponent size={14} color={iconColor} style={{ marginBottom: 4 }} />
                       <Text style={[
                         styles.roleSegmentText,
                         isActive && styles.roleSegmentTextActive
@@ -1463,40 +1476,6 @@ export default function MobileDashboard() {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.mockTitle}>Development Simulator Logins</Text>
-          <View style={styles.mockButtonsContainer}>
-            <TouchableOpacity
-              onPress={() => { setSelectedRole('ADMIN'); handleLogin('admin@university.edu', 'password123'); }}
-              style={styles.mockButton}
-            >
-              <UserCheck size={14} color="#EF4444" />
-              <Text style={styles.mockButtonText}>Admin</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => { setSelectedRole('TEACHER'); handleLogin('teacher.dbms@university.edu', 'password123'); }}
-              style={styles.mockButton}
-            >
-              <GraduationCap size={14} color="#4338CA" />
-              <Text style={styles.mockButtonText}>Teacher</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => { setSelectedRole('STUDENT'); handleLogin('student.john@university.edu', 'password123'); }}
-              style={styles.mockButton}
-            >
-              <UserCheck size={14} color="#14B8A6" />
-              <Text style={styles.mockButtonText}>Student</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => { setSelectedRole('PARENT'); handleLogin('parent.doe@gmail.com', 'password123'); }}
-              style={styles.mockButton}
-            >
-              <Users size={14} color="#38BDF8" />
-              <Text style={styles.mockButtonText}>Parent</Text>
-            </TouchableOpacity>
-          </View>
           
           <TouchableOpacity 
             style={styles.apiLabelContainer} 
@@ -4792,8 +4771,9 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    paddingVertical: 8,
     borderRadius: 9,
+    flexDirection: 'column',
   },
   roleSegmentChipActive: {
     backgroundColor: 'rgba(20, 184, 166, 0.12)',
