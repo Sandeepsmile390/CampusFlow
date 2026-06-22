@@ -71,6 +71,41 @@ const getHostApiUrl = () => {
 
 let API_URL = getHostApiUrl();
 
+const roleConfigs = {
+  ADMIN: {
+    icon: UserCheck,
+    activeColor: '#EF4444',
+    bgActive: 'rgba(239, 68, 68, 0.12)',
+    borderActive: 'rgba(239, 68, 68, 0.3)',
+    inactiveColor: 'rgba(239, 68, 68, 0.4)',
+    label: 'Admin'
+  },
+  TEACHER: {
+    icon: BookOpen,
+    activeColor: '#6366F1',
+    bgActive: 'rgba(99, 102, 241, 0.12)',
+    borderActive: 'rgba(99, 102, 241, 0.3)',
+    inactiveColor: 'rgba(99, 102, 241, 0.4)',
+    label: 'Teacher'
+  },
+  STUDENT: {
+    icon: GraduationCap,
+    activeColor: '#14B8A6',
+    bgActive: 'rgba(20, 184, 166, 0.12)',
+    borderActive: 'rgba(20, 184, 166, 0.3)',
+    inactiveColor: 'rgba(20, 184, 166, 0.4)',
+    label: 'Student'
+  },
+  PARENT: {
+    icon: Users,
+    activeColor: '#38BDF8',
+    bgActive: 'rgba(56, 189, 248, 0.12)',
+    borderActive: 'rgba(56, 189, 248, 0.3)',
+    inactiveColor: 'rgba(56, 189, 248, 0.4)',
+    label: 'Parent'
+  }
+};
+
 export default function MobileDashboard() {
   const [email, setEmail] = useState('student.john@university.edu');
   const [password, setPassword] = useState('password123');
@@ -1380,17 +1415,9 @@ export default function MobileDashboard() {
               <View style={styles.roleSegmentsContainer}>
                 {(['STUDENT', 'TEACHER', 'ADMIN', 'PARENT'] as const).map((r) => {
                   const isActive = selectedRole === r;
-                  
-                  // Resolve role icon
-                  let IconComponent = GraduationCap;
-                  let iconColor = isActive ? '#14B8A6' : '#64748B';
-                  if (r === 'TEACHER') {
-                    IconComponent = BookOpen;
-                  } else if (r === 'ADMIN') {
-                    IconComponent = UserCheck;
-                  } else if (r === 'PARENT') {
-                    IconComponent = Users;
-                  }
+                  const config = roleConfigs[r];
+                  const IconComponent = config.icon;
+                  const itemColor = isActive ? config.activeColor : config.inactiveColor;
 
                   return (
                     <TouchableOpacity
@@ -1398,15 +1425,23 @@ export default function MobileDashboard() {
                       onPress={() => setSelectedRole(r)}
                       style={[
                         styles.roleSegmentChip,
-                        isActive && styles.roleSegmentChipActive
+                        isActive ? {
+                          backgroundColor: config.bgActive,
+                          borderWidth: 1,
+                          borderColor: config.borderActive,
+                        } : {
+                          borderWidth: 1,
+                          borderColor: 'transparent'
+                        }
                       ]}
                     >
-                      <IconComponent size={14} color={iconColor} style={{ marginBottom: 4 }} />
+                      <IconComponent size={16} color={itemColor} style={{ marginBottom: 4 }} />
                       <Text style={[
                         styles.roleSegmentText,
-                        isActive && styles.roleSegmentTextActive
+                        { color: itemColor },
+                        isActive && { fontWeight: 'bold' }
                       ]}>
-                        {r === 'STUDENT' ? 'Student' : r === 'TEACHER' ? 'Teacher' : r === 'ADMIN' ? 'Admin' : 'Parent'}
+                        {config.label}
                       </Text>
                     </TouchableOpacity>
                   );
